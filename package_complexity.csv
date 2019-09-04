@@ -1,4 +1,4 @@
-Package;Complexity;Number of statements;Number of types;Number of methods;Average complexity by class;Average complexity by method;Path
+Package;Complexity;Number of statements;Number of types;Number of methods;Average class complexity;Average method complexity;Path
 de.bsmgmbh.service;407;493;31;100;13.12903226;4.07;E:\workspace\java\finance.egp.parentegp-parent-sb2\EGPAdapterCore\src\main\java\de\bsmgmbh\service
 de.bsmgmbh.service.batch.step.processor;383;419;23;78;16.65217391;4.91025641;E:\workspace\java\finance.egp.parentegp-parent-sb2\EGPAdapterCore\src\main\java\de\bsmgmbh\service\batch\step\processor
 de.bsmgmbh.persistence.rest;285;326;28;114;10.17857143;2.5;E:\workspace\java\finance.egp.parentegp-parent-sb2\EGPAdapterCore\src\main\java\de\bsmgmbh\persistence\rest
