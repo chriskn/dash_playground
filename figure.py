@@ -4,10 +4,20 @@ import plotly.express as px
 import squarify
 from colour import Color
 
-BASE_COLOR =Color(rgb=(0.26,0.57,0.78))
+BASE_COLOR = Color(rgb=(0.26, 0.57, 0.78))
+
 
 def to_plotly_rgb(color):
-    return "rgb("+str(color.rgb[0] * 255)+ ","+ str(color.rgb[1] * 255)+ ","+ str(color.rgb[2] * 255)+ ")"
+    return (
+        "rgb("
+        + str(color.rgb[0] * 255)
+        + ","
+        + str(color.rgb[1] * 255)
+        + ","
+        + str(color.rgb[2] * 255)
+        + ")"
+    )
+
 
 def treemap(title, values, labels):
     fig = go.Figure()
@@ -17,8 +27,10 @@ def treemap(title, values, labels):
     height = 100.0
     normed = squarify.normalize_sizes(values, width, height)
     rects = squarify.squarify(normed, x, y, width, height)
-    colors = [to_plotly_rgb(c) for c in 
-        list(BASE_COLOR.range_to(Color("Yellow"), len(values)))]
+    colors = [
+        to_plotly_rgb(c)
+        for c in list(BASE_COLOR.range_to(Color("Yellow"), len(values)))
+    ]
     shapes = []
     annotations = []
     counter = 0
@@ -61,21 +73,33 @@ def treemap(title, values, labels):
     )
     return dcc.Graph(figure=fig)
 
-def scatter(dataframe, label_col, x_col, y_col, size_col, color_col):
-    fig = px.scatter(dataframe, x=x_col, y=y_col,
-                 size=size_col, 
-                 color=color_col
-                 )
+
+def scatter(title, dataframe, label_col, x_col, y_col, size_col, color_col):
+    fig = px.scatter(
+        dataframe,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=color_col,
+        hover_name=label_col,
+        color_continuous_scale=px.colors.sequential.Blues,
+    )
+    fig.layout.title = {"text": title, "x": 0.5}
+    fig.update_traces(
+        marker=dict(line=dict(width=2, color="Black")), selector=dict(mode="markers")
+    )
     return dcc.Graph(figure=fig)
 
 
-def barchart(title, y_values, labels):
-    colors = [to_plotly_rgb(c) for c in list(BASE_COLOR.range_to(Color("Yellow"), len(y_values)))]
-    fig = go.Figure(
-        data=[go.Bar(x=labels, y=y_values, marker_color=colors)]
-    )
+def barchart(title, dataframe, value_col, label_col, max_entries):
+    df = dataframe
+    df[value_col] = df[value_col].astype("float")
+    df = df.sort_values(value_col, ascending=False)
+    values = list(df[value_col])[:max_entries]
+    labels = list(df[label_col])[:max_entries]
+    fig = go.Figure(data=[go.Bar(x=labels, y=values, marker_color="#2171b5")])
     fig.layout = go.Layout(
-        title=title,
+        title={"text": title, "x": 0.5},
         xaxis=dict(autorange=True, showgrid=False, ticks="", showticklabels=False),
     )
     return dcc.Graph(figure=fig)

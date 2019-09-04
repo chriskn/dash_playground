@@ -7,12 +7,8 @@ import package_complexity
 import dash_html_components as html
 import pandas as pd
 
-app = dash.Dash("SAT")
-
-df = pd.read_csv(
-    "package_complexity.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
-)
-PACKAGE_COMP_TAB = package_complexity.content(df)
+app = dash.Dash("Sat")
+app.title = "Sat"
 
 app.layout = html.Div(
     className="container scalable",
@@ -49,7 +45,7 @@ app.layout = html.Div(
 @app.callback(Output("tabs-content", "children"), [Input("tabs", "value")])
 def render_content(tab):
     if tab == "tab-1":
-        return PACKAGE_COMP_TAB
+        return package_complexity.content
     elif tab == "tab-2":
         return html.Div(
             [

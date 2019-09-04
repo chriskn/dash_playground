@@ -31,6 +31,13 @@ body {
     line-height: 1;
 }
 
+.banner h5 {
+    display: inline-block;
+    font-family: 'Helvetica Neue', Helvetica, Arial;
+    font-size: 2rem;
+    line-height: 1;
+}
+
 .banner Img {
     position: relative;
     height: 3rem;
@@ -61,11 +68,17 @@ body {
 #top-row, #middle-row, #bottom-row {
     height: 37rem;
 }
-/*
-#choropleth, #flights_hm, #flights_time_series, #value_by_city_graph, #count_by_day_graph, #flight_info_table_outer {
-    height: 35rem;
+
+.dash-cell-value {
+    text-align: left;
+    padding-left: 1rem !important;
 }
-*/
+
+.dash-spreadsheet-container .dash-spreadsheet-inner input:not([type="radio"]):not([type="checkbox"]) {
+    text-align: left !important;
+    padding-left: 1rem !important;
+}
+
 .dash-spreadsheet-container .dash-spreadsheet-inner th, tr, td {
     text-align: center !important;
     font-family: "Open Sans", sans-serif !important;
