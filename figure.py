@@ -74,7 +74,7 @@ def treemap(title, values, labels):
     return dcc.Graph(figure=fig)
 
 
-def scatter(title, dataframe, label_col, x_col, y_col, size_col, color_col):
+def scatter(id="", dataframe=None, label_col=None, x_col=None, y_col=None, size_col=None, color_col=None):
     fig = px.scatter(
         dataframe,
         x=x_col,
@@ -84,14 +84,14 @@ def scatter(title, dataframe, label_col, x_col, y_col, size_col, color_col):
         hover_name=label_col,
         color_continuous_scale=px.colors.sequential.Blues,
     )
-    fig.layout.title = {"text": title, "x": 0.5}
     fig.update_traces(
         marker=dict(line=dict(width=2, color="Black")), selector=dict(mode="markers")
     )
-    return dcc.Graph(figure=fig)
+    fig.layout.clickmode = 'event+select'
+    return dcc.Graph(figure=fig, id=id)
 
 
-def barchart(title, dataframe, value_col, label_col, max_entries):
+def barchart(id="", title="", dataframe=None, value_col="", label_col="", max_entries=0):
     df = dataframe
     df[value_col] = df[value_col].astype("float")
     df = df.sort_values(value_col, ascending=False)
@@ -101,8 +101,9 @@ def barchart(title, dataframe, value_col, label_col, max_entries):
     fig.layout = go.Layout(
         title={"text": title, "x": 0.5},
         xaxis=dict(autorange=True, showgrid=False, ticks="", showticklabels=False),
+        clickmode = 'event+select'
     )
-    return dcc.Graph(figure=fig)
+    return dcc.Graph(figure=fig, id=id)
 
 
 def stacked_barchart():
