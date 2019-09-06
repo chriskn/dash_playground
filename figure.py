@@ -74,7 +74,15 @@ def treemap(title, values, labels):
     return dcc.Graph(figure=fig)
 
 
-def scatter(id="", dataframe=None, label_col=None, x_col=None, y_col=None, size_col=None, color_col=None):
+def scatter(
+    id="",
+    dataframe=None,
+    label_col=None,
+    x_col=None,
+    y_col=None,
+    size_col=None,
+    color_col=None,
+):
     fig = px.scatter(
         dataframe,
         x=x_col,
@@ -87,21 +95,30 @@ def scatter(id="", dataframe=None, label_col=None, x_col=None, y_col=None, size_
     fig.update_traces(
         marker=dict(line=dict(width=2, color="Black")), selector=dict(mode="markers")
     )
-    fig.layout.clickmode = 'event+select'
+    fig.layout.clickmode = "event+select"
     return dcc.Graph(figure=fig, id=id)
 
 
-def barchart(id="", title="", dataframe=None, value_col="", label_col="", max_entries=0):
+def barchart(
+    id="", title="", dataframe=None, value_col="", label_col="", max_entries=0, marked_labels = None
+):
     df = dataframe
     df[value_col] = df[value_col].astype("float")
     df = df.sort_values(value_col, ascending=False)
     values = list(df[value_col])[:max_entries]
     labels = list(df[label_col])[:max_entries]
-    fig = go.Figure(data=[go.Bar(x=labels, y=values, marker_color="#2171b5")])
+    marker_colors = ["rgb(33,113,181)"] * len(labels)
+    if marked_labels:
+        for i, label in enumerate(labels):
+            if label in marked_labels:
+                marker_colors[i]="rgb(0,0,15)"
+    fig = go.Figure(
+        data=[go.Bar(x=labels, y=values, marker_color=marker_colors) ]
+    )
     fig.layout = go.Layout(
         title={"text": title, "x": 0.5},
         xaxis=dict(autorange=True, showgrid=False, ticks="", showticklabels=False),
-        clickmode = 'event+select'
+        clickmode="event+select",
     )
     return dcc.Graph(figure=fig, id=id)
 
