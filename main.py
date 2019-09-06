@@ -1,4 +1,4 @@
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import dash
 import dash_table
 from datetime import datetime as dt
@@ -49,12 +49,13 @@ table = html.Div(
 
 
 def _chart(cssClassName="", id="", chart=None):
-    return html.Div(className=cssClassName, id=id, children=dcc.Loading(children=chart))
+    return html.Div(className=cssClassName, children=dcc.Loading(id=id, children=chart))
 
 
 def scatter_plot(data):
     return _chart(
         cssClassName="twelve columns",
+        id="scatter_container",
         chart=figure.scatter(
             id="scatter",
             dataframe=data,
@@ -67,7 +68,7 @@ def scatter_plot(data):
     )
 
 
-def barchart1(data, selected=None):
+def barchart1(data):
     return _chart(
         cssClassName="six columns",
         id="bar1-container",
@@ -78,12 +79,11 @@ def barchart1(data, selected=None):
             value_col="Number of types",
             label_col="Package",
             max_entries=50,
-            marked_labels = selected
         ),
     )
 
 
-def barchart2(data, selected=None):
+def barchart2(data):
     return _chart(
         cssClassName="six columns",
         id="bar2-container",
@@ -94,7 +94,6 @@ def barchart2(data, selected=None):
             value_col="Number of methods",
             label_col="Package",
             max_entries=50,
-            marked_labels = selected
         ),
     )
 
@@ -106,7 +105,7 @@ main_content = html.Div(
             open=True,
             className="container scalable",
             children=[
-                html.Summary(id="title" "Package Complexity & Size", className="summary"),
+                html.Summary("Package Complexity & Size", className="summary"),
                 html.Div(
                     id="top-row", className="row", children=scatter_plot(dataframe)
                 ),
@@ -172,12 +171,63 @@ def update_top(data):
 def update_middle(filter_data, selected_indicies):
     data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
     selected_labels = []
+    return [barchart1(data), barchart2(data)]
+
+
+@app.callback(
+    Output("scatter", "figure"), [
+    Input('data-table', 'derived_virtual_selected_rows'),
+    Input("data-table", "derived_virtual_data"),   
+    ],  state = [State('scatter', 'figure')]
+)
+def update_scatter(selected_indicies, row_data, figure):
+    return update_marked_dots(selected_indicies, row_data, figure)
+
+
+@app.callback(
+    Output("bar2", "figure"), [
+    Input('data-table', 'derived_virtual_selected_rows'),
+    Input("data-table", "derived_virtual_data"),   
+    ],  state = [State('bar2', 'figure')]
+)
+def update_bar2(selected_indicies, row_data, figure):
+    return update_marked_bars(selected_indicies, row_data, figure)
+
+
+@app.callback(
+    Output("bar1", "figure"), [
+    Input('data-table', 'derived_virtual_selected_rows'),
+    Input("data-table", "derived_virtual_data"),   
+    ],  state = [State('bar1', 'figure')]
+)
+def update_bar1(selected_indicies, row_data, figure):
+    return update_marked_bars(selected_indicies, row_data, figure)
+
+def update_marked_bars(selected_indicies, row_data, figure):
     if selected_indicies:
-        labels = data["Package"]    
-        selected_labels  = [labels[i] for i in selected_indicies]  
-    return [barchart1(data, selected_labels), barchart2(data, selected_labels)]
-
-
+        data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+        data_labels = list(data["Package"]) 
+        selected_labels  = [data_labels[i] for i in selected_indicies]  
+        graph_labels = figure.get("data")[0].get("x")   
+        marker_colors = figure.get("data")[0].get("marker").get("color")
+        for i, label in enumerate(graph_labels):
+            if label in selected_labels:
+                marker_colors[i]="rgb(255, 55, 0)"
+        figure.get("data")[0].get("marker")['color'] = marker_colors
+    return figure
+    
+def update_marked_dots(selected_indicies, row_data, figure):
+    if selected_indicies:
+        data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+        data_labels = list(data["Package"]) 
+        selected_labels  = [data_labels[i] for i in selected_indicies]  
+        graph_labels = figure.get("data")[0].get("hovertext")   
+        marker_colors = figure.get("data")[0].get("marker").get("color")
+        for i, label in enumerate(graph_labels):
+            if label in selected_labels:
+                marker_colors[i]="rgb(255, 55, 0)"
+        figure.get("data")[0].get("marker")['color'] = marker_colors
+    return figure
 # @app.callback(
 #     Output("bar2", "figure"), [Input("scatter", "selectedData"), Input("bar1", "clickData")], state = [State('bar2', 'figure')]
 # )

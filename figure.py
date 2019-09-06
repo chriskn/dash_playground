@@ -100,7 +100,7 @@ def scatter(
 
 
 def barchart(
-    id="", title="", dataframe=None, value_col="", label_col="", max_entries=0, marked_labels = None
+    id="", title="", dataframe=None, value_col="", label_col="", max_entries=0
 ):
     df = dataframe
     df[value_col] = df[value_col].astype("float")
@@ -108,10 +108,6 @@ def barchart(
     values = list(df[value_col])[:max_entries]
     labels = list(df[label_col])[:max_entries]
     marker_colors = ["rgb(33,113,181)"] * len(labels)
-    if marked_labels:
-        for i, label in enumerate(labels):
-            if label in marked_labels:
-                marker_colors[i]="rgb(0,0,15)"
     fig = go.Figure(
         data=[go.Bar(x=labels, y=values, marker_color=marker_colors) ]
     )
