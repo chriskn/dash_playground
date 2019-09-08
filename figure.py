@@ -108,9 +108,7 @@ def barchart(
     values = list(df[value_col])[:max_entries]
     labels = list(df[label_col])[:max_entries]
     marker_colors = ["rgb(33,113,181)"] * len(labels)
-    fig = go.Figure(
-        data=[go.Bar(x=labels, y=values, marker_color=marker_colors) ]
-    )
+    fig = go.Figure(data=[go.Bar(x=labels, y=values, marker_color=marker_colors)])
     fig.layout = go.Layout(
         title={"text": title, "x": 0.5},
         xaxis=dict(autorange=True, showgrid=False, ticks="", showticklabels=False),

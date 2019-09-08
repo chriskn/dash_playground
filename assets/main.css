@@ -414,3 +414,14 @@
   
   /* Larger than Desktop HD */
   @media (min-width: 1200px) {}
+
+
+  .scatter-container {
+    display: block;
+    width: auto;
+  }
+
+  .scatter {
+    display: block;
+    width: auto;
+  }
