@@ -21,6 +21,7 @@ body {
     flex-direction: row;
     align-items: center;
     background-color: #fcfcfc;
+    justify-content: space-between;
 }
 
 .banner h6 {
@@ -36,6 +37,11 @@ body {
     font-family: 'Helvetica Neue', Helvetica, Arial;
     font-size: 2rem;
     line-height: 1;
+}
+
+.report-date {
+    float: right;
+    margin-left: auto;
 }
 
 .banner Img {
@@ -89,11 +95,13 @@ body {
     font-size: 11px;
 }
 .summary{
-    padding-bottom: 1.5rem;
+    padding-bottom: 1rem;
     font-family: "Open Sans", sans-serif !important;
     font-size: 1.5rem;
     outline: 0;
 }
+
+
 
 /*
   ##Device = Most of the Smartphones Mobiles (Portrait)
