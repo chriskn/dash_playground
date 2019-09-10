@@ -3,6 +3,35 @@ import dash_html_components as html
 import dash_table
 
 
+def tile(class_name="", id="", figure=None):
+    return html.Div(className=class_name, children=dcc.Loading(id=id, children=figure))
+
+
+def three_row_layout(row1_children, row2_children, row3_children, id_prefix=""):
+    return html.Div(
+        className="app_main_content",
+        children=[
+            html.Details(
+                open=True,
+                className="container scalable",
+                children=[
+                    html.Summary("Package Complexity & Size", className="summary"),
+                    html.Div(id="top-row", className="row", children=row1_children),
+                ],
+            ),
+            html.Details(
+                open=True,
+                className="container scalable",
+                children=[
+                    html.Summary("Number of Methods & Classes", className="summary"),
+                    html.Div(id="middle-row", className="row", children=row2_children),
+                ],
+            ),
+            html.Div(id="bottom-row", className="row", children=row3_children),
+        ],
+    )
+
+
 def datatable(
     dataframe=None, id_prefix="", hidden_columns=None, download_name="table_data.csv"
 ):
@@ -10,13 +39,45 @@ def datatable(
         id=id_prefix + "table",
         className="twelve columns",
         children=[
-            html.A(
-                "Download CSV",
-                className="download-link",
-                id=id_prefix + "download-csv",
-                download=download_name,
-                href="",
-                target="_blank",
+            html.Div(
+                children=[
+                    html.Div(
+                        className="table_control",
+                        children=[
+                            html.A(
+                                "Deselect All",
+                                id=id_prefix + "data-table-deselect-all",
+                                className="table_control_item",
+                            ),
+                            html.A(
+                                "Deselect Shown",
+                                id=id_prefix + "data-table-deselect-shown",
+                                className="table_control_item",
+                            ),
+                            html.A(
+                                "Select Shown",
+                                id=id_prefix + "data-table-select-shown",
+                                className="table_control_item",
+                            ),
+                            html.A(
+                                "Download CSV",
+                                className="table_control_item",
+                                id=id_prefix + "download-csv",
+                                download=download_name,
+                                href="",
+                                target="_blank",
+                            ),
+                            dcc.Checklist(
+                                id=id_prefix + "data-table-checkboxes",
+                                className="table_control",
+                                options=[
+                                    {"label": "Show Paths", "value": "showPaths"},
+                                    {"label": "Show Projects", "value": "showProjects"},
+                                ],
+                            ),
+                        ],
+                    )
+                ]
             ),
             dcc.Loading(
                 id=id_prefix + "tabe-loading",

@@ -15,7 +15,6 @@ body {
 
 .banner {
     height: 5rem;
-    margin-bottom: 1rem;
     padding: 0rem 1rem 0rem;
     display: flex;
     flex-direction: row;
@@ -35,7 +34,7 @@ body {
 .banner h5 {
     display: inline-block;
     font-family: 'Helvetica Neue', Helvetica, Arial;
-    font-size: 2rem;
+    font-size: 1.5rem;
     line-height: 1;
 }
 

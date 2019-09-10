@@ -40,6 +40,23 @@
   display: None
 }
 
+.table_checkboxes{
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  margin-left: 1rem;
+}
+
+.table_control {
+  display: flex;
+  flex-direction: row;
+}
+
+.table_control_item {
+  margin-right: 1rem;
+}
+
+
 .container {
     position: relative;
     width: 100%;

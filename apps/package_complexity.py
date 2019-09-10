@@ -8,23 +8,19 @@ import flask
 import figure
 import dash_bootstrap_components as dbc
 import urllib
-import html_components as hmtl_comp
+import html_components as html_comp
 from app import app
 
 dataframe = pd.read_csv(
     "package_complexity.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
 )
 dataframe = dataframe.round(2)
-# dataframe = dataframe.drop(columns=["Path"])
-
-
-def _tile(cssClassName="", id="", chart=None):
-    return html.Div(className=cssClassName, children=dcc.Loading(id=id, children=chart))
+id_prefix = "pcomp"
 
 
 def scatter_plot(data):
     return figure.scatter(
-        id="scatter",
+        id=id_prefix + "scatter",
         dataframe=data,
         label_col="Package",
         x_col="Complexity",
@@ -36,7 +32,7 @@ def scatter_plot(data):
 
 def barchart1(data):
     return figure.barchart(
-        id="bar1",
+        id=id_prefix + "bar1",
         title="Number of classes interfaces and enums in package",
         dataframe=data,
         value_col="Number of types",
@@ -47,7 +43,7 @@ def barchart1(data):
 
 def barchart2(data):
     return figure.barchart(
-        id="bar2",
+        id=id_prefix + "bar2",
         title="Number of methods in package",
         dataframe=data,
         value_col="Number of methods",
@@ -56,78 +52,38 @@ def barchart2(data):
     )
 
 
-table = hmtl_comp.datatable(
-    dataframe=dataframe, hidden_columns=["Path"], download_name="package_complexity.csv"
-)
-
-
-layout = html.Div(
-    className="app_main_content",
-    children=[
-        html.Details(
-            open=True,
-            className="container scalable",
-            children=[
-                html.Summary("Package Complexity & Size", className="summary"),
-                html.Div(
-                    id="top-row",
-                    className="row",
-                    children=html.Div(
-                        className="twelve columns",
-                        children=dcc.Loading(
-                            id="scatter-container", children=scatter_plot(dataframe)
-                        ),
-                    ),
-                ),
-            ],
+layout = html_comp.three_row_layout(
+    row1_children=html_comp.tile(
+        class_name="twelve columns",
+        id=id_prefix + "scatter-container",
+        figure=scatter_plot(dataframe),
+    ),
+    row2_children=[
+        html_comp.tile(
+            class_name="six columns",
+            id=id_prefix + "bar1-container",
+            figure=barchart1(dataframe),
         ),
-        html.Details(
-            open=True,
-            className="container scalable",
-            children=[
-                html.Summary("Number of Methods & Classes", className="summary"),
-                html.Div(
-                    id="middle-row",
-                    className="row",
-                    children=[
-                        html.Div(
-                            className="six columns",
-                            children=dcc.Loading(
-                                id="bar1-container", children=barchart1(dataframe)
-                            ),
-                        ),
-                        html.Div(
-                            className="six columns",
-                            children=dcc.Loading(
-                                id="bar2-container", children=barchart1(dataframe)
-                            ),
-                        ),
-                    ],
-                ),
-            ],
+        html_comp.tile(
+            class_name="six columns",
+            id=id_prefix + "bar2-container",
+            figure=barchart2(dataframe),
         ),
-        html.Div(id="bottom-row", className="row", children=table),
     ],
+    row3_children=html_comp.datatable(
+        id_prefix=id_prefix,
+        dataframe=dataframe,
+        hidden_columns=["Path"],
+        download_name="package_complexity.csv",
+    ),
 )
 
 
 @app.callback(
-    Output("scatter-container", "children"),
+    Output(id_prefix + "bar1-container", "children"),
     [
-        Input("data-table", "derived_virtual_data"),
-        Input("data-table", "derived_virtual_selected_rows"),
-    ],
-)
-def update_top(filter_data, selected_indicies):
-    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
-    return scatter_plot(data)
-
-
-@app.callback(
-    Output("bar1-container", "children"),
-    [
-        Input("data-table", "derived_virtual_data"),
-        Input("data-table", "derived_virtual_selected_rows"),
+        Input(id_prefix + "data-table", "derived_virtual_data"),
+        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
     ],
 )
 def update_bar1(filter_data, selected_indicies):
@@ -136,10 +92,10 @@ def update_bar1(filter_data, selected_indicies):
 
 
 @app.callback(
-    Output("bar2-container", "children"),
+    Output(id_prefix + "bar2-container", "children"),
     [
-        Input("data-table", "derived_virtual_data"),
-        Input("data-table", "derived_virtual_selected_rows"),
+        Input(id_prefix + "data-table", "derived_virtual_data"),
+        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
     ],
 )
 def update_bar2(filter_data, selected_indicies):
@@ -148,12 +104,12 @@ def update_bar2(filter_data, selected_indicies):
 
 
 @app.callback(
-    Output("scatter", "figure"),
+    Output(id_prefix + "scatter", "figure"),
     [
-        Input("data-table", "derived_virtual_selected_rows"),
-        Input("data-table", "derived_virtual_data"),
+        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
+        Input(id_prefix + "data-table", "derived_virtual_data"),
     ],
-    state=[State("scatter", "figure")],
+    state=[State(id_prefix + "scatter", "figure")],
 )
 def update_scatter(selected_indicies, row_data, figure):
     if selected_indicies:
@@ -161,15 +117,28 @@ def update_scatter(selected_indicies, row_data, figure):
             selected_indicies, row_data, figure, figure.get("data")[0].get("hovertext")
         )
     return figure
+    # raise PreventUpdate
 
 
 @app.callback(
-    Output("bar2", "figure"),
+    Output(id_prefix + "scatter-container", "children"),
     [
-        Input("data-table", "derived_virtual_selected_rows"),
-        Input("data-table", "derived_virtual_data"),
+        Input(id_prefix + "data-table", "derived_virtual_data"),
+        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
     ],
-    state=[State("bar2", "figure")],
+)
+def update_scatter(filter_data, selected_indicies):
+    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
+    return scatter_plot(data)
+
+
+@app.callback(
+    Output(id_prefix + "bar2", "figure"),
+    [
+        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
+        Input(id_prefix + "data-table", "derived_virtual_data"),
+    ],
+    state=[State(id_prefix + "bar2", "figure")],
 )
 def update_bar2(selected_indicies, row_data, figure):
     if selected_indicies:
@@ -180,12 +149,12 @@ def update_bar2(selected_indicies, row_data, figure):
 
 
 @app.callback(
-    Output("bar1", "figure"),
+    Output(id_prefix + "bar1", "figure"),
     [
-        Input("data-table", "derived_virtual_selected_rows"),
-        Input("data-table", "derived_virtual_data"),
+        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
+        Input(id_prefix + "data-table", "derived_virtual_data"),
     ],
-    state=[State("bar1", "figure")],
+    state=[State(id_prefix + "bar1", "figure")],
 )
 def update_bar1(selected_indicies, row_data, figure):
     if selected_indicies:
@@ -196,7 +165,8 @@ def update_bar1(selected_indicies, row_data, figure):
 
 
 @app.callback(
-    Output("download-csv", "href"), [Input("data-table", "derived_virtual_data")]
+    Output(id_prefix + "download-csv", "href"),
+    [Input(id_prefix + "data-table", "derived_virtual_data")],
 )
 def download_csv(data):
     if data:
@@ -207,26 +177,70 @@ def download_csv(data):
 
 
 @app.callback(
-    Output("data-table", "selected_rows"),
+    Output(id_prefix + "data-table", "selected_rows"),
     [
-        Input("scatter", "selectedData"),
-        Input("bar1", "selectedData"),
-        Input("bar2", "selectedData"),
+        Input(id_prefix + "data-table-deselect-all", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table-deselect-shown", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table-select-shown", "n_clicks_timestamp"),
+        Input(id_prefix + "scatter", "selectedData"),
+        Input(id_prefix + "bar1", "selectedData"),
+        Input(id_prefix + "bar2", "selectedData"),
     ],
-    state=[State("data-table", "data")],
+    state=[
+        State(id_prefix + "data-table", "data"),
+        State(id_prefix + "data-table", "derived_virtual_data"),
+        State(id_prefix + "data-table", "selected_rows"),
+    ],
 )
-def update_selected(selected_points, selected_bars1, selected_bars2, table_data):
+def update_selected(
+    deselect_all_tst,
+    deselect_shown_tst,
+    select_shown_tst,
+    selected_points,
+    selected_bars1,
+    selected_bars2,
+    table_data,
+    filtered_table_data,
+    selected_rows,
+):
+    deselect_shown = int(deselect_shown_tst) if deselect_shown_tst else 0
+    select_shown = int(select_shown_tst) if select_shown_tst else 0
+    deselect_all = int(deselect_all_tst) if deselect_all_tst else 0
     if selected_bars1:
         selected_labels = [point.get("x") for point in selected_bars1.get("points")]
         return update_selected_table_rows(table_data, selected_labels)
-    if selected_bars2:
+    elif selected_bars2:
         selected_labels = [point.get("x") for point in selected_bars2.get("points")]
         return update_selected_table_rows(table_data, selected_labels)
-    if selected_points:
+    elif selected_points:
         selected_labels = [
             point.get("hovertext") for point in selected_points.get("points")
         ]
         return update_selected_table_rows(table_data, selected_labels)
+    elif deselect_shown > select_shown and deselect_shown > deselect_all:
+        if not selected_rows:
+            return []
+        labels_to_uncheck = pd.DataFrame.from_dict(filtered_table_data)[
+            "Package"
+        ].tolist()
+        selected_labels = [
+            pd.DataFrame.from_dict(table_data)["Package"][i] for i in selected_rows
+        ]
+        new_selected_labels = [
+            selected
+            for selected in selected_labels
+            if selected not in labels_to_uncheck
+        ]
+        return update_selected_table_rows(table_data, new_selected_labels)
+    elif select_shown > deselect_shown and select_shown > deselect_all:
+        selected_labels = pd.DataFrame.from_dict(filtered_table_data)[
+            "Package"
+        ].tolist()
+        print("select shown")
+        return update_selected_table_rows(table_data, selected_labels)
+    elif deselect_all > deselect_shown and deselect_all > select_shown:
+        print("deselect all")
+        return []
     return []
 
 

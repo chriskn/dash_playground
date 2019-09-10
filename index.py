@@ -4,8 +4,9 @@ from dash.dependencies import Input, Output
 
 from app import app
 from apps import package_complexity
+import flask
 
-app.title = "Sat"
+
 app.layout = html.Div(
     [
         dcc.Location(id="url", refresh=False),
