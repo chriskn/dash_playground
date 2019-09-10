@@ -1,6 +1,5 @@
 from dash.dependencies import Input, Output, State
 import dash
-import dash_table
 from datetime import datetime as dt
 import dash_core_components as dcc
 import dash_html_components as html
@@ -9,52 +8,19 @@ import flask
 import figure
 import dash_bootstrap_components as dbc
 import urllib
-
-app = dash.Dash("Sat", url_base_pathname="/sat/pcomp/")
-app.title = "Sat Package Comp."
+import html_components as hmtl_comp
+from app import app
 
 dataframe = pd.read_csv(
     "package_complexity.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
 )
-dataframe = dataframe.drop(columns=["Path"])
+dataframe= dataframe.round(2)
+#dataframe = dataframe.drop(columns=["Path"])
 
-table = html.Div(
-    id="table",
-    className="twelve columns",
-    children=[html.A(
-            'Download CSV',
-            className="download-link",
-            id='download-csv',
-            download="package_complexity.csv",
-            href="",
-            target="_blank"
-        ),
-        dcc.Loading(
-            id="tabe-loading",
-            children=dash_table.DataTable(
-                id="data-table",
-                columns=[{"name": i, "id": i} for i in dataframe.columns],
-                filter_action="native",
-                sort_action="native",
-                sort_mode="multi",
-                row_selectable="multi",
-                fill_width=True,
-                data=dataframe.to_dict("records"),
-                style_header={
-                    "textTransform": "Uppercase",
-                    "fontWeight": "bold",
-                    "backgroundColor": "#ffffff",
-                    "padding": "10px 0px",
-                },
-                style_cell={"textAlign": "left"},
-                style_data_conditional=[
-                    {"if": {"row_index": "even"}, "backgroundColor": "#f5f6f7"},
-                    {"if": {"row_index": "odd"}, "backgroundColor": "#ffffff"},
-                ],
-            ),
-        )
-    ],
-)
+
+
+
+
 
 
 def _tile(cssClassName="", id="", chart=None):
@@ -106,8 +72,10 @@ def barchart2(data):
         ),
     )
 
+table = hmtl_comp.datatable(dataframe=dataframe, hidden_columns=["Path"], download_name="package_complexity.csv")
 
-main_content = html.Div(
+
+layout = html.Div(
     className="app_main_content",
     children=[
         html.Details(
@@ -133,27 +101,6 @@ main_content = html.Div(
             ],
         ),
         html.Div(id="bottom-row", className="row", children=table),
-    ],
-)
-
-
-app.layout = html.Div(
-    className="container scalable",
-    children=[
-        dcc.Location(id='url', refresh=False),
-        html.Div(
-            id="banner",
-            className="banner",
-            children=[
-                html.Img(src=app.get_asset_url("sat_logo.png")),
-                html.H6("SAT"),
-                html.H5("Reports from 30.08.2019 14:21:14", className="report-date")
-            ],
-        ),
-        html.Div(
-            className="twelve columns",
-            children=main_content,      
-        ),
     ],
 )
 
@@ -277,5 +224,3 @@ def update_marked(selected_indicies, row_data, figure, graph_labels):
     return figure
 
 
-if __name__ == "__main__":
-    app.run_server(debug=True)

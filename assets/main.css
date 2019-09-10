@@ -30,10 +30,16 @@
 
 .Select {
     z-index: 1002;
-}*/
-
+}
+*/
 /* Grid
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+/* dont display toggle columns button for table*/
+.show-hide {
+  display: None
+}
+
 .container {
     position: relative;
     width: 100%;
