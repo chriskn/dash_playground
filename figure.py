@@ -93,11 +93,7 @@ def scatter(
         color_continuous_scale=px.colors.sequential.Blues,
     )
     fig.update_traces(
-        marker=dict(
-            line=dict(width=2, color="Black")
-        ), 
-        selector=dict(mode="markers"),
-
+        marker=dict(line=dict(width=2, color="Black")), selector=dict(mode="markers")
     )
     fig.layout.clickmode = "event+select"
 

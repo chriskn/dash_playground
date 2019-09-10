@@ -14,13 +14,8 @@ from app import app
 dataframe = pd.read_csv(
     "package_complexity.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
 )
-dataframe= dataframe.round(2)
-#dataframe = dataframe.drop(columns=["Path"])
-
-
-
-
-
+dataframe = dataframe.round(2)
+# dataframe = dataframe.drop(columns=["Path"])
 
 
 def _tile(cssClassName="", id="", chart=None):
@@ -28,51 +23,42 @@ def _tile(cssClassName="", id="", chart=None):
 
 
 def scatter_plot(data):
-    return _tile(
-        cssClassName="twelve columns",
-        id="scatter-container",
-        chart=figure.scatter(
-            id="scatter",
-            dataframe=data,
-            label_col="Package",
-            x_col="Complexity",
-            y_col="Number of statements",
-            size_col="Average method complexity",
-            color_col="Average class complexity",
-        ),
+    return figure.scatter(
+        id="scatter",
+        dataframe=data,
+        label_col="Package",
+        x_col="Complexity",
+        y_col="Number of statements",
+        size_col="Average method complexity",
+        color_col="Average class complexity",
     )
 
 
 def barchart1(data):
-    return _tile(
-        cssClassName="six columns",
-        id="bar1-container",
-        chart=figure.barchart(
-            id="bar1",
-            title="Number of classes interfaces and enums in package",
-            dataframe=data,
-            value_col="Number of types",
-            label_col="Package",
-            max_entries=50,
-        ),
+    return figure.barchart(
+        id="bar1",
+        title="Number of classes interfaces and enums in package",
+        dataframe=data,
+        value_col="Number of types",
+        label_col="Package",
+        max_entries=50,
     )
 
 
 def barchart2(data):
-    return _tile(
-        cssClassName="six columns",
-        id="bar2-container",
-        chart=figure.barchart(
-            id="bar2",
-            title="Number of methods in package",
-            dataframe=data,
-            value_col="Number of methods",
-            label_col="Package",
-            max_entries=50,
-        ),
+    return figure.barchart(
+        id="bar2",
+        title="Number of methods in package",
+        dataframe=data,
+        value_col="Number of methods",
+        label_col="Package",
+        max_entries=50,
     )
 
-table = hmtl_comp.datatable(dataframe=dataframe, hidden_columns=["Path"], download_name="package_complexity.csv")
+
+table = hmtl_comp.datatable(
+    dataframe=dataframe, hidden_columns=["Path"], download_name="package_complexity.csv"
+)
 
 
 layout = html.Div(
@@ -84,7 +70,14 @@ layout = html.Div(
             children=[
                 html.Summary("Package Complexity & Size", className="summary"),
                 html.Div(
-                    id="top-row", className="row", children=scatter_plot(dataframe)
+                    id="top-row",
+                    className="row",
+                    children=html.Div(
+                        className="twelve columns",
+                        children=dcc.Loading(
+                            id="scatter-container", children=scatter_plot(dataframe)
+                        ),
+                    ),
                 ),
             ],
         ),
@@ -96,7 +89,20 @@ layout = html.Div(
                 html.Div(
                     id="middle-row",
                     className="row",
-                    children=[barchart1(dataframe), barchart2(dataframe)],
+                    children=[
+                        html.Div(
+                            className="six columns",
+                            children=dcc.Loading(
+                                id="bar1-container", children=barchart1(dataframe)
+                            ),
+                        ),
+                        html.Div(
+                            className="six columns",
+                            children=dcc.Loading(
+                                id="bar2-container", children=barchart1(dataframe)
+                            ),
+                        ),
+                    ],
                 ),
             ],
         ),
@@ -106,7 +112,7 @@ layout = html.Div(
 
 
 @app.callback(
-    Output("top-row", "children"),
+    Output("scatter-container", "children"),
     [
         Input("data-table", "derived_virtual_data"),
         Input("data-table", "derived_virtual_selected_rows"),
@@ -118,15 +124,27 @@ def update_top(filter_data, selected_indicies):
 
 
 @app.callback(
-    Output("middle-row", "children"),
+    Output("bar1-container", "children"),
     [
         Input("data-table", "derived_virtual_data"),
         Input("data-table", "derived_virtual_selected_rows"),
     ],
 )
-def update_middle(filter_data, selected_indicies):
+def update_bar1(filter_data, selected_indicies):
     data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
-    return [barchart1(data), barchart2(data)]
+    return barchart1(data)
+
+
+@app.callback(
+    Output("bar2-container", "children"),
+    [
+        Input("data-table", "derived_virtual_data"),
+        Input("data-table", "derived_virtual_selected_rows"),
+    ],
+)
+def update_bar2(filter_data, selected_indicies):
+    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
+    return barchart2(data)
 
 
 @app.callback(
@@ -176,13 +194,17 @@ def update_bar1(selected_indicies, row_data, figure):
         )
     return figure
 
-@app.callback(Output("download-csv", "href"), [Input("data-table", "derived_virtual_data")])
+
+@app.callback(
+    Output("download-csv", "href"), [Input("data-table", "derived_virtual_data")]
+)
 def download_csv(data):
     if data:
         df = pd.DataFrame.from_dict(data)
-        csv_string = df.iloc[:, ::-1].to_csv(index=False, encoding='utf-8', decimal=",")
+        csv_string = df.iloc[:, ::-1].to_csv(index=False, encoding="utf-8", decimal=",")
         csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
         return csv_string
+
 
 @app.callback(
     Output("data-table", "selected_rows"),
@@ -190,12 +212,10 @@ def download_csv(data):
         Input("scatter", "selectedData"),
         Input("bar1", "selectedData"),
         Input("bar2", "selectedData"),
-
     ],
     state=[State("data-table", "data")],
-
 )
-def update_selected(selected_points, selected_bars1,selected_bars2,  table_data):
+def update_selected(selected_points, selected_bars1, selected_bars2, table_data):
     if selected_bars1:
         selected_labels = [point.get("x") for point in selected_bars1.get("points")]
         return update_selected_table_rows(table_data, selected_labels)
@@ -203,14 +223,20 @@ def update_selected(selected_points, selected_bars1,selected_bars2,  table_data)
         selected_labels = [point.get("x") for point in selected_bars2.get("points")]
         return update_selected_table_rows(table_data, selected_labels)
     if selected_points:
-        selected_labels = [point.get("hovertext") for point in selected_points.get("points")]
+        selected_labels = [
+            point.get("hovertext") for point in selected_points.get("points")
+        ]
         return update_selected_table_rows(table_data, selected_labels)
     return []
 
+
 def update_selected_table_rows(table_data, selected_labels):
-        packages_in_table = pd.DataFrame.from_dict(table_data)["Package"].tolist()
-        indicies = [i for i, label in enumerate(packages_in_table) if label in selected_labels]
-        return indicies
+    packages_in_table = pd.DataFrame.from_dict(table_data)["Package"].tolist()
+    indicies = [
+        i for i, label in enumerate(packages_in_table) if label in selected_labels
+    ]
+    return indicies
+
 
 def update_marked(selected_indicies, row_data, figure, graph_labels):
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
@@ -222,5 +248,3 @@ def update_marked(selected_indicies, row_data, figure, graph_labels):
             marker_colors[i] = "rgb(255, 55, 0)"
     figure.get("data")[0].get("marker")["color"] = marker_colors
     return figure
-
-
