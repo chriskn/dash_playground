@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 import urllib
 import html_components as html_comp
 from app import app
+from dash.exceptions import PreventUpdate
 
 dataframe = pd.read_csv(
     "package_complexity.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
@@ -104,6 +105,18 @@ def update_bar2(filter_data, selected_indicies):
 
 
 @app.callback(
+    Output(id_prefix + "scatter-container", "children"),
+    [
+        Input(id_prefix + "data-table", "derived_virtual_data"),
+        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
+    ],
+)
+def update_scatter(filter_data, selected_indicies):
+    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
+    return scatter_plot(data)
+
+
+@app.callback(
     Output(id_prefix + "scatter", "figure"),
     [
         Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
@@ -116,20 +129,7 @@ def update_scatter(selected_indicies, row_data, figure):
         return update_marked(
             selected_indicies, row_data, figure, figure.get("data")[0].get("hovertext")
         )
-    return figure
-    # raise PreventUpdate
-
-
-@app.callback(
-    Output(id_prefix + "scatter-container", "children"),
-    [
-        Input(id_prefix + "data-table", "derived_virtual_data"),
-        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
-    ],
-)
-def update_scatter(filter_data, selected_indicies):
-    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
-    return scatter_plot(data)
+    raise PreventUpdate
 
 
 @app.callback(
@@ -145,7 +145,7 @@ def update_bar2(selected_indicies, row_data, figure):
         return update_marked(
             selected_indicies, row_data, figure, figure.get("data")[0].get("x")
         )
-    return figure
+    raise PreventUpdate
 
 
 @app.callback(
@@ -161,7 +161,7 @@ def update_bar1(selected_indicies, row_data, figure):
         return update_marked(
             selected_indicies, row_data, figure, figure.get("data")[0].get("x")
         )
-    return figure
+    raise PreventUpdate
 
 
 @app.callback(
@@ -174,6 +174,20 @@ def download_csv(data):
         csv_string = df.iloc[:, ::-1].to_csv(index=False, encoding="utf-8", decimal=",")
         csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
         return csv_string
+    raise PreventUpdate
+
+
+@app.callback(
+    Output(id_prefix + "data-table", "hidden_columns"),
+    [Input(id_prefix + "data-table-checkboxes", "value")],
+)
+def update_hidden_columns(values):
+    print(values)
+    if not values:
+        return ["Path"]
+    elif "showPaths" in values:
+        return []
+        
 
 
 @app.callback(
@@ -236,10 +250,8 @@ def update_selected(
         selected_labels = pd.DataFrame.from_dict(filtered_table_data)[
             "Package"
         ].tolist()
-        print("select shown")
         return update_selected_table_rows(table_data, selected_labels)
     elif deselect_all > deselect_shown and deselect_all > select_shown:
-        print("deselect all")
         return []
     return []
 
