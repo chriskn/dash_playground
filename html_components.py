@@ -67,14 +67,14 @@ def datatable(
                                 href="",
                                 target="_blank",
                             ),
-                            dcc.Checklist( 
+                            dcc.Checklist(
                                 id=id_prefix + "data-table-checkboxes",
                                 className="table_control",
                                 labelClassName="table_control_item",
                                 options=[
                                     {"label": "Show Paths", "value": "showPaths"},
                                     {"label": "Show Projects", "value": "showProjects"},
-                                ], 
+                                ],
                             ),
                         ],
                     )

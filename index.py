@@ -30,9 +30,6 @@ app.layout = html.Div(
                     children=[
                         dcc.Tab(label="Package Complexity & Size", value="pcomp"),
                         dcc.Tab(label="Class Complexity & size", value="classcomp"),
-
-                      
-
                     ],
                 ),
                 html.Div(id="page-content"),
@@ -53,4 +50,4 @@ def display_page(tab):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False, threaded=True, processes=1)
+    app.run_server(debug=True)

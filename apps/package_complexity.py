@@ -55,21 +55,11 @@ def barchart2(data):
 
 layout = html_comp.three_row_layout(
     row1_children=html_comp.tile(
-        class_name="twelve columns",
-        id=id_prefix + "scatter-container",
-        figure=scatter_plot(dataframe),
+        class_name="twelve columns", id=id_prefix + "scatter-container"
     ),
     row2_children=[
-        html_comp.tile(
-            class_name="six columns",
-            id=id_prefix + "bar1-container",
-            figure=barchart1(dataframe),
-        ),
-        html_comp.tile(
-            class_name="six columns",
-            id=id_prefix + "bar2-container",
-            figure=barchart2(dataframe),
-        ),
+        html_comp.tile(class_name="six columns", id=id_prefix + "bar1-container"),
+        html_comp.tile(class_name="six columns", id=id_prefix + "bar2-container"),
     ],
     row3_children=html_comp.datatable(
         id_prefix=id_prefix,
@@ -87,9 +77,15 @@ layout = html_comp.three_row_layout(
         Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
     ],
 )
-def update_bar1(filter_data, selected_indicies):
-    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
-    return barchart1(data)
+def update_bar1(row_data, selected_indicies):
+    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+    chart = barchart1(data)
+    figure = chart.figure
+    if selected_indicies:
+        chart.figure = update_marked(
+            selected_indicies, row_data, figure, figure.data[0].x
+        )
+    return chart
 
 
 @app.callback(
@@ -99,9 +95,15 @@ def update_bar1(filter_data, selected_indicies):
         Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
     ],
 )
-def update_bar2(filter_data, selected_indicies):
-    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
-    return barchart2(data)
+def update_bar2(row_data, selected_indicies):
+    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+    chart = barchart2(data)
+    figure = chart.figure
+    if selected_indicies:
+        chart.figure = update_marked(
+            selected_indicies, row_data, figure, figure.data[0].x
+        )
+    return chart
 
 
 @app.callback(
@@ -111,57 +113,15 @@ def update_bar2(filter_data, selected_indicies):
         Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
     ],
 )
-def update_scatter(filter_data, selected_indicies):
-    data = pd.DataFrame.from_dict(filter_data) if filter_data else dataframe
-    return scatter_plot(data)
-
-
-@app.callback(
-    Output(id_prefix + "scatter", "figure"),
-    [
-        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
-        Input(id_prefix + "data-table", "derived_virtual_data"),
-    ],
-    state=[State(id_prefix + "scatter", "figure")],
-)
-def update_scatter(selected_indicies, row_data, figure):
+def update_scatter(row_data, selected_indicies):
+    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+    chart = scatter_plot(data)
+    figure = chart.figure
     if selected_indicies:
-        return update_marked(
-            selected_indicies, row_data, figure, figure.get("data")[0].get("hovertext")
+        chart.figure = update_marked(
+            selected_indicies, row_data, figure, figure.data[0].hovertext
         )
-    raise PreventUpdate
-
-
-@app.callback(
-    Output(id_prefix + "bar2", "figure"),
-    [
-        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
-        Input(id_prefix + "data-table", "derived_virtual_data"),
-    ],
-    state=[State(id_prefix + "bar2", "figure")],
-)
-def update_bar2(selected_indicies, row_data, figure):
-    if selected_indicies:
-        return update_marked(
-            selected_indicies, row_data, figure, figure.get("data")[0].get("x")
-        )
-    raise PreventUpdate
-
-
-@app.callback(
-    Output(id_prefix + "bar1", "figure"),
-    [
-        Input(id_prefix + "data-table", "derived_virtual_selected_rows"),
-        Input(id_prefix + "data-table", "derived_virtual_data"),
-    ],
-    state=[State(id_prefix + "bar1", "figure")],
-)
-def update_bar1(selected_indicies, row_data, figure):
-    if selected_indicies:
-        return update_marked(
-            selected_indicies, row_data, figure, figure.get("data")[0].get("x")
-        )
-    raise PreventUpdate
+    return chart
 
 
 @app.callback(
@@ -186,7 +146,6 @@ def update_hidden_columns(values):
         return ["Path"]
     elif "showPaths" in values:
         return []
-        
 
 
 @app.callback(
@@ -267,9 +226,9 @@ def update_marked(selected_indicies, row_data, figure, graph_labels):
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
     data_labels = list(data["Package"])
     selected_labels = [data_labels[i] for i in selected_indicies]
-    marker_colors = figure.get("data")[0].get("marker").get("color")
+    marker_colors = list(figure.data[0].marker.color)
     for i, label in enumerate(graph_labels):
         if label in selected_labels:
             marker_colors[i] = "rgb(255, 55, 0)"
-    figure.get("data")[0].get("marker")["color"] = marker_colors
+    figure.data[0].marker.color = tuple(marker_colors)
     return figure
