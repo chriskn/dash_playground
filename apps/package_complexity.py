@@ -182,7 +182,6 @@ def download_csv(data):
     [Input(id_prefix + "data-table-checkboxes", "value")],
 )
 def update_hidden_columns(values):
-    print(values)
     if not values:
         return ["Path"]
     elif "showPaths" in values:

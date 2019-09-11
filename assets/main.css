@@ -40,6 +40,23 @@
   display: None
 }
 
+.tab {
+  padding: 1rem 1rem 1rem 1rem !important;
+  font-size: 1.5rem !important;
+  background-color: white !important;
+}
+
+.tab--selected{
+  border-top: 2px solid rgb(33,113,181) !important;
+  font-size: 1.7rem !important;
+  white-space: nowrap;
+  text-overflow: unset !important;
+  overflow: unset !important;
+  display: inline-table !important;
+  padding: 1.2rem 1.2rem 1.2rem 1.2rem !important;
+  background-color:#f5f6f7 !important;
+}
+
 .table_checkboxes{
   display: flex;
   flex-direction: row;
