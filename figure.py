@@ -96,7 +96,6 @@ def scatter(
         marker=dict(line=dict(width=2, color="Black")), selector=dict(mode="markers")
     )
     fig.layout.clickmode = "event+select"
-
     return dcc.Graph(figure=fig, id=id)
 
 
