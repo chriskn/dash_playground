@@ -4,8 +4,10 @@ from dash.dependencies import Input, Output
 
 from app import app
 from apps import package_complexity
+from apps import class_complexity
 import flask
 
+layout1 = class_complexity.layout
 
 app.layout = html.Div(
     [
@@ -42,7 +44,7 @@ app.layout = html.Div(
 @app.callback(Output("page-content", "children"), [Input("navigation", "value")])
 def display_page(tab):
     if tab == "classcomp":
-        return html.Div("fuck off")
+        return layout1
     elif tab == "pcomp":
         return package_complexity.layout
     else:

@@ -12,7 +12,6 @@ def three_row_layout(row1_children, row2_children, row3_children, id_prefix=""):
         className="app_main_content",
         children=[
             html.Details(
-                open=True,
                 className="container scalable",
                 children=[
                     html.Summary("Package Complexity & Size", className="summary"),
@@ -20,7 +19,6 @@ def three_row_layout(row1_children, row2_children, row3_children, id_prefix=""):
                 ],
             ),
             html.Details(
-                open=True,
                 className="container scalable",
                 children=[
                     html.Summary("Number of Methods & Classes", className="summary"),

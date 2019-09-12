@@ -9,6 +9,18 @@ def update_download_link(data):
     return csv_string
 
 
+def update_bar_data(data, fig, value_col, label_col, max_entries):
+    data[value_col] = data[value_col].astype("float")
+    sorted_data = data.sort_values(value_col, ascending=False)
+    values = list(sorted_data[value_col])[:max_entries]
+    labels = list(sorted_data[label_col])[:max_entries]
+    marker_colors = ["rgb(33,113,181)"] * len(labels)
+    fig.data[0].x = tuple(labels)
+    fig.data[0].y = tuple(values)
+    fig.data[0].marker = {"color": tuple(marker_colors)}
+    return fig
+
+
 def update_marker(selected_indicies, data, figure, graph_labels):
     data_labels = list(data["Package"])
     selected_labels = [data_labels[i] for i in selected_indicies]

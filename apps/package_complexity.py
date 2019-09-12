@@ -1,12 +1,6 @@
 from dash.dependencies import Input, Output, State
-import dash
-from datetime import datetime as dt
-import dash_core_components as dcc
-import dash_html_components as html
 import pandas as pd
-import flask
 import figure
-import dash_bootstrap_components as dbc
 import html_components as html_comp
 from app import app
 from app import cache
@@ -18,6 +12,30 @@ dataframe = pd.read_csv(
 )
 dataframe = dataframe.round(2)
 id_prefix = "pcomp"
+
+value_col_bar1 = "Number of types"
+value_col_bar2 = "Number of methods"
+label_col = "Package"
+max_entries = 50
+
+barchart1 = figure.barchart(
+    id=id_prefix + "bar1",
+    title="Number of classes interfaces and enums in package",
+    dataframe=dataframe,
+    value_col=value_col_bar1,
+    label_col=label_col,
+    max_entries=50,
+)
+
+barchart2 = figure.barchart(
+    id=id_prefix + "bar2",
+    title="Number of methods in package",
+    dataframe=dataframe,
+    value_col=value_col_bar2,
+    label_col=label_col,
+    max_entries=max_entries,
+)
+
 
 layout = html_comp.three_row_layout(
     row1_children=html_comp.tile(
@@ -45,19 +63,17 @@ layout = html_comp.three_row_layout(
 )
 @cache.memoize()
 def update_bar1(row_data, selected_indicies):
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
+    chart = barchart1
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
-    chart = figure.barchart(
-        id=id_prefix + "bar1",
-        title="Number of classes interfaces and enums in package",
-        dataframe=data,
-        value_col="Number of types",
-        label_col="Package",
-        max_entries=50,
-    )
-    fig = chart.figure
+    if row_data:
+        fig = controller_common.update_bar_data(
+            data, chart.figure, value_col_bar1, label_col, max_entries
+        )
     if selected_indicies:
         chart.figure = controller_common.update_marker(
-            selected_indicies, data, fig, fig.data[0].x
+            selected_indicies, data, chart.figure, chart.figure.data[0].x
         )
     return chart
 
@@ -71,19 +87,17 @@ def update_bar1(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_bar2(row_data, selected_indicies):
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
+    chart = barchart2
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
-    chart = figure.barchart(
-        id=id_prefix + "bar2",
-        title="Number of methods in package",
-        dataframe=data,
-        value_col="Number of methods",
-        label_col="Package",
-        max_entries=50,
-    )
-    fig = chart.figure
+    if row_data:
+        chart.figure = controller_common.update_bar_data(
+            data, chart.figure, value_col_bar2, label_col, max_entries
+        )
     if selected_indicies:
         chart.figure = controller_common.update_marker(
-            selected_indicies, data, fig, fig.data[0].x
+            selected_indicies, data, chart.figure, chart.figure.data[0].x
         )
     return chart
 
@@ -97,6 +111,8 @@ def update_bar2(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_scatter(row_data, selected_indicies):
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
     chart = figure.scatter(
         id=id_prefix + "scatter",
@@ -163,6 +179,19 @@ def update_selected(
     filtered_table_data,
     selected_rows,
 ):
+    if not any([
+        deselect_all_tst,
+        deselect_shown_tst,
+        select_shown_tst,
+        selected_points,
+        selected_bars1,
+        selected_bars2,
+        table_data,
+        filtered_table_data,
+        selected_rows,
+        ]
+    ):
+        raise PreventUpdate
     deselect_shown = int(deselect_shown_tst) if deselect_shown_tst else 0
     select_shown = int(select_shown_tst) if select_shown_tst else 0
     deselect_all = int(deselect_all_tst) if deselect_all_tst else 0
