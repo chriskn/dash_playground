@@ -4,7 +4,10 @@ import dash_table
 
 
 def tile(class_name="", id="", figure=None):
-    return html.Div(className=class_name, children=dcc.Loading(id=id, children=figure))
+    return html.Div(
+        className=class_name,
+        children=dcc.Loading(id=id, children=figure, type="default"),
+    )
 
 
 def three_row_layout(row1_children, row2_children, row3_children, id_prefix=""):
@@ -30,6 +33,43 @@ def three_row_layout(row1_children, row2_children, row3_children, id_prefix=""):
     )
 
 
+def _table_controls(id_prefix="", download_name="table_data.csv"):
+    return [
+        html.A(
+            "Deselect All",
+            id=id_prefix + "data-table-deselect-all",
+            className="table_control_item",
+        ),
+        html.A(
+            "Deselect Shown",
+            id=id_prefix + "data-table-deselect-shown",
+            className="table_control_item",
+        ),
+        html.A(
+            "Select Shown",
+            id=id_prefix + "data-table-select-shown",
+            className="table_control_item",
+        ),
+        html.A(
+            "Download CSV",
+            className="table_control_item",
+            id=id_prefix + "download-csv",
+            download=download_name,
+            href="",
+            target="_blank",
+        ),
+        dcc.Checklist(
+            id=id_prefix + "data-table-checkboxes",
+            className="table_control",
+            labelClassName="table_control_item",
+            options=[
+                {"label": "Show Paths", "value": "showPaths"},
+                {"label": "Show Projects", "value": "showProjects"},
+            ],
+        ),
+    ]
+
+
 def datatable(
     dataframe=None, id_prefix="", hidden_columns=None, download_name="table_data.csv"
 ):
@@ -40,41 +80,7 @@ def datatable(
             html.Div(
                 children=[
                     html.Div(
-                        className="table_control",
-                        children=[
-                            html.A(
-                                "Deselect All",
-                                id=id_prefix + "data-table-deselect-all",
-                                className="table_control_item",
-                            ),
-                            html.A(
-                                "Deselect Shown",
-                                id=id_prefix + "data-table-deselect-shown",
-                                className="table_control_item",
-                            ),
-                            html.A(
-                                "Select Shown",
-                                id=id_prefix + "data-table-select-shown",
-                                className="table_control_item",
-                            ),
-                            html.A(
-                                "Download CSV",
-                                className="table_control_item",
-                                id=id_prefix + "download-csv",
-                                download=download_name,
-                                href="",
-                                target="_blank",
-                            ),
-                            dcc.Checklist(
-                                id=id_prefix + "data-table-checkboxes",
-                                className="table_control",
-                                labelClassName="table_control_item",
-                                options=[
-                                    {"label": "Show Paths", "value": "showPaths"},
-                                    {"label": "Show Projects", "value": "showProjects"},
-                                ],
-                            ),
-                        ],
+                        className="table_control", children=_table_controls(id_prefix)
                     )
                 ]
             ),
@@ -91,7 +97,6 @@ def datatable(
                     fill_width=True,
                     data=dataframe.to_dict("records"),
                     style_header={
-                        "textTransform": "Uppercase",
                         "fontWeight": "bold",
                         "backgroundColor": "#ffffff",
                         "padding": "10px 0px",

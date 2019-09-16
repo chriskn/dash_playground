@@ -1,5 +1,6 @@
 import pandas as pd
 import urllib.parse as url_parser
+from dash.exceptions import PreventUpdate
 
 
 def update_download_link(data):
@@ -7,6 +8,37 @@ def update_download_link(data):
     csv_string = df.iloc[:, ::-1].to_csv(index=False, encoding="utf-8", decimal=",")
     csv_string = "data:text/csv;charset=utf-8," + url_parser.quote(csv_string)
     return csv_string
+
+
+def update_scatter(row_data, selected_indicies, scatter, dataframe):
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
+    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+    chart = scatter
+    if selected_indicies:
+        fig = chart.figure
+        chart.figure = update_marker(
+            selected_indicies, data, fig, fig.data[0].hovertext
+        )
+    return chart
+
+
+def update_barchart(
+    row_data, selected_indicies, barchart, dataframe, value_col, label_col, max_entries
+):
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
+    chart = barchart
+    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+    if row_data:
+        chart.figure = update_bar_data(
+            data, chart.figure, value_col, label_col, max_entries
+        )
+    if selected_indicies:
+        chart.figure = update_marker(
+            selected_indicies, data, chart.figure, chart.figure.data[0].x
+        )
+    return chart
 
 
 def update_bar_data(data, fig, value_col, label_col, max_entries):

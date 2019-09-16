@@ -19,7 +19,7 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    background-color: #fcfcfc;
+    background-color: #e4e4e4;
     justify-content: space-between;
 }
 
@@ -79,7 +79,18 @@ body {
 .dash-cell-value {
     text-align: left;
     padding-left: 1rem !important;
-    font-size: 1.2em;
+    font-size: 15px;
+}
+
+.dash-filter {
+    font-size: 15px !important;
+}
+
+.dash-header{
+    font-size: 13px !important;
+    font-weight: bold;
+    background-color: #ffffff;
+    padding: 10px 0px;
 }
 
 .dash-spreadsheet-container .dash-spreadsheet-inner input:not([type="radio"]):not([type="checkbox"]) {
@@ -96,7 +107,7 @@ body {
 .summary{
     padding-bottom: 1rem;
     font-family: "Open Sans", sans-serif !important;
-    font-size: 1.5rem;
+    font-size: 1em;
     outline: 0;
 }
 

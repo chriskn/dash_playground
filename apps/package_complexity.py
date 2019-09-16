@@ -6,15 +6,26 @@ from app import app
 from app import cache
 from dash.exceptions import PreventUpdate
 import controller_common
+import time
 
 dataframe = pd.read_csv(
     "package_complexity.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
 )
 dataframe = dataframe.round(2)
 id_prefix = "pcomp"
+dataframe.columns = [
+    "Package",
+    "Complexity",
+    "Num. statements",
+    "Num. types",
+    "Num. methods",
+    "Av. class complexity",
+    "Av. method complexity",
+    "Path",
+]
 
-value_col_bar1 = "Number of types"
-value_col_bar2 = "Number of methods"
+value_col_bar1 = "Num. types"
+value_col_bar2 = "Num. methods"
 label_col = "Package"
 max_entries = 50
 
@@ -63,19 +74,15 @@ layout = html_comp.three_row_layout(
 )
 @cache.memoize()
 def update_bar1(row_data, selected_indicies):
-    if not row_data and not selected_indicies:
-        raise PreventUpdate
-    chart = barchart1
-    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
-    if row_data:
-        fig = controller_common.update_bar_data(
-            data, chart.figure, value_col_bar1, label_col, max_entries
-        )
-    if selected_indicies:
-        chart.figure = controller_common.update_marker(
-            selected_indicies, data, chart.figure, chart.figure.data[0].x
-        )
-    return chart
+    return controller_common.update_barchart(
+        row_data,
+        selected_indicies,
+        barchart1,
+        dataframe,
+        value_col_bar1,
+        label_col,
+        max_entries,
+    )
 
 
 @app.callback(
@@ -87,19 +94,15 @@ def update_bar1(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_bar2(row_data, selected_indicies):
-    if not row_data and not selected_indicies:
-        raise PreventUpdate
-    chart = barchart2
-    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
-    if row_data:
-        chart.figure = controller_common.update_bar_data(
-            data, chart.figure, value_col_bar2, label_col, max_entries
-        )
-    if selected_indicies:
-        chart.figure = controller_common.update_marker(
-            selected_indicies, data, chart.figure, chart.figure.data[0].x
-        )
-    return chart
+    return controller_common.update_barchart(
+        row_data,
+        selected_indicies,
+        barchart2,
+        dataframe,
+        value_col_bar2,
+        label_col,
+        max_entries,
+    )
 
 
 @app.callback(
@@ -111,24 +114,20 @@ def update_bar2(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_scatter(row_data, selected_indicies):
-    if not row_data and not selected_indicies:
-        raise PreventUpdate
-    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
-    chart = figure.scatter(
-        id=id_prefix + "scatter",
-        dataframe=data,
-        label_col="Package",
-        x_col="Complexity",
-        y_col="Number of statements",
-        size_col="Average method complexity",
-        color_col="Average class complexity",
+    return controller_common.update_scatter(
+        row_data,
+        selected_indicies,
+        figure.scatter(
+            id=id_prefix + "scatter",
+            dataframe=dataframe,
+            label_col="Package",
+            x_col="Complexity",
+            y_col="Num. statements",
+            size_col="Av. method complexity",
+            color_col="Av. class complexity",
+        ),
+        dataframe,
     )
-    fig = chart.figure
-    if selected_indicies:
-        chart.figure = controller_common.update_marker(
-            selected_indicies, data, fig, fig.data[0].hovertext
-        )
-    return chart
 
 
 @app.callback(
@@ -179,16 +178,17 @@ def update_selected(
     filtered_table_data,
     selected_rows,
 ):
-    if not any([
-        deselect_all_tst,
-        deselect_shown_tst,
-        select_shown_tst,
-        selected_points,
-        selected_bars1,
-        selected_bars2,
-        table_data,
-        filtered_table_data,
-        selected_rows,
+    if not any(
+        [
+            deselect_all_tst,
+            deselect_shown_tst,
+            select_shown_tst,
+            selected_points,
+            selected_bars1,
+            selected_bars2,
+            table_data,
+            filtered_table_data,
+            selected_rows,
         ]
     ):
         raise PreventUpdate
