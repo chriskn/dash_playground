@@ -19,7 +19,7 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    background-color: #e4e4e4;
+    background-color: #ffffff;
     justify-content: space-between;
 }
 
@@ -51,8 +51,10 @@ body {
 }
 
 .app_main_content {
-    padding: 2rem 2rem 4rem 2rem;
+    padding: 0rem 2rem 4rem 2rem;
 }
+
+
 
 #dropdown-select-outer {
     display: flex;
@@ -91,24 +93,37 @@ body {
     font-weight: bold;
     background-color: #ffffff;
     padding: 10px 0px;
+    overflow: hidden;
 }
 
 .dash-spreadsheet-container .dash-spreadsheet-inner input:not([type="radio"]):not([type="checkbox"]) {
     text-align: left !important;
-    padding-left: 1rem !important;
 }
 
 .dash-spreadsheet-container .dash-spreadsheet-inner th, tr, td {
-    text-align: center !important;
-    font-family: "Open Sans", sans-serif !important;
+    text-align: left ter !important;
+    font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
     border: none !important;
     font-size: 11px;
 }
+
+.column-header-name {
+    padding-left: 0.4rem;
+}
+
 .summary{
-    padding-bottom: 1rem;
-    font-family: "Open Sans", sans-serif !important;
-    font-size: 1em;
+    padding-bottom: 0.3rem;
+    padding-top: 0.3rem;
+    margin-top: 2rem;
+    color: #fff;
+    font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    font-size: 15px;
     outline: 0;
+    margin-left: 1%;
+    margin-right: 1%;
+    background-color: #2171b5  !important;
+    padding-left: 1rem;
+    cursor: pointer;
 }
 
 

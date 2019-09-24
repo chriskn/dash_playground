@@ -4,7 +4,7 @@ from dash.dependencies import Input, Output, State
 
 from app import app, cache
 from apps import package_complexity
-from apps import class_complexity
+from apps import file_changes
 import flask
 from dash.exceptions import PreventUpdate
 import re
@@ -19,11 +19,7 @@ navigation = html.Div(
             className="navigation-link",
             href="/sat/packcomp",
         ),
-        dcc.Link(
-            "Class Complexity & size",
-            className="navigation-link",
-            href="/sat/classcomp",
-        ),
+        dcc.Link("File Changes", className="navigation-link", href="/sat/fchanges"),
     ],
 )
 
@@ -66,8 +62,8 @@ app.layout = html.Div(
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 @cache.memoize()
 def display_tab_content(path):
-    if path == "/sat/classcomp":
-        return class_complexity.layout
+    if path == "/sat/fchanges":
+        return file_changes.layout
     elif path == "/sat/packcomp":
         return package_complexity.layout
     else:

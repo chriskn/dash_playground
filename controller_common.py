@@ -1,6 +1,7 @@
 import pandas as pd
 import urllib.parse as url_parser
 from dash.exceptions import PreventUpdate
+import constants
 
 
 def update_download_link(data):
@@ -10,56 +11,48 @@ def update_download_link(data):
     return csv_string
 
 
-def update_scatter(row_data, selected_indicies, scatter, dataframe):
-    if not row_data and not selected_indicies:
-        raise PreventUpdate
-    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
+def update_scatter(row_data, selected_indicies, scatter, data):
     chart = scatter
     if selected_indicies:
         fig = chart.figure
-        chart.figure = update_marker(
+        chart.figure = _update_marker(
             selected_indicies, data, fig, fig.data[0].hovertext
         )
     return chart
 
 
 def update_barchart(
-    row_data, selected_indicies, barchart, dataframe, value_col, label_col, max_entries
+    row_data, selected_indicies, barchart, dataframe, value_cols, label_col, max_entries
 ):
-    if not row_data and not selected_indicies:
-        raise PreventUpdate
     chart = barchart
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
     if row_data:
-        chart.figure = update_bar_data(
-            data, chart.figure, value_col, label_col, max_entries
+        chart.figure = _update_bar_data(
+            data, chart.figure, value_cols, label_col, max_entries
         )
     if selected_indicies:
-        chart.figure = update_marker(
+        chart.figure = _update_marker(
             selected_indicies, data, chart.figure, chart.figure.data[0].x
         )
     return chart
 
 
-def update_bar_data(data, fig, value_col, label_col, max_entries):
-    data[value_col] = data[value_col].astype("float")
-    sorted_data = data.sort_values(value_col, ascending=False)
-    values = list(sorted_data[value_col])[:max_entries]
-    labels = list(sorted_data[label_col])[:max_entries]
-    marker_colors = ["rgb(33,113,181)"] * len(labels)
-    fig.data[0].x = tuple(labels)
-    fig.data[0].y = tuple(values)
-    fig.data[0].marker = {"color": tuple(marker_colors)}
+def _update_bar_data(data, fig, value_cols, label_col, max_entries):
+    labels = list(data[label_col])[:max_entries]
+    for i, value_col in enumerate(value_cols):
+        fig.data[i].x = labels
+        fig.data[i].y = data[value_cols[i]].tolist()[:max_entries]
+    fig.data[0].marker = {"color": ["rgb(33,113,181)"] * len(labels)}
     return fig
 
 
-def update_marker(selected_indicies, data, figure, graph_labels):
+def _update_marker(selected_indicies, data, figure, graph_labels):
     data_labels = list(data["Package"])
     selected_labels = [data_labels[i] for i in selected_indicies]
     marker_colors = list(figure.data[0].marker.color)
     for i, label in enumerate(graph_labels):
         if label in selected_labels:
-            marker_colors[i] = "rgb(255, 55, 0)"
+            marker_colors[i] = constants.SELECTED_COLOR
     figure.data[0].marker.color = tuple(marker_colors)
     return figure
 

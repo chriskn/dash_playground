@@ -1,0 +1,1 @@
+SELECTED_COLOR = "rgb(247, 100, 59)"

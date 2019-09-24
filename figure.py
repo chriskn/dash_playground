@@ -1,8 +1,9 @@
 import dash_core_components as dcc
 import plotly.graph_objs as go
-import plotly.express as px
 import squarify
 from colour import Color
+import plotly.express as px
+from plotly.graph_objs.layout import Legend
 
 BASE_COLOR = Color(rgb=(0.26, 0.57, 0.78))
 
@@ -82,53 +83,84 @@ def scatter(
     y_col=None,
     size_col=None,
     color_col=None,
+    size_min=None,
 ):
     fig = px.scatter(
         dataframe,
         x=x_col,
         y=y_col,
         size=size_col,
-        color=color_col,
         hover_name=label_col,
+        color=color_col,
         color_continuous_scale=px.colors.sequential.Blues,
+        height=400,
     )
     fig.update_traces(
-        marker=dict(line=dict(width=2, color="Black")), selector=dict(mode="markers")
+        marker=dict(
+            line=dict(width=1, color="Black"),
+            sizemin=size_min if size_min else 4,
+            reversescale=True,
+        ),
+        selector=dict(mode="markers"),
     )
     fig.layout.clickmode = "event+select"
+    if not color_col:
+        fig.data[0].marker.color = "rgba(33,113,181, 0.9)"
     return dcc.Graph(figure=fig, id=id)
 
 
 def barchart(
     id="", title="", dataframe=None, value_col="", label_col="", max_entries=0
 ):
-    df = dataframe
-    df[value_col] = df[value_col].astype("float")
-    df = df.sort_values(value_col, ascending=False)
-    values = list(df[value_col])[:max_entries]
-    labels = list(df[label_col])[:max_entries]
+    dataframe[value_col] = dataframe[value_col].astype("float")
+    values = list(dataframe[value_col])[:max_entries]
+    labels = list(dataframe[label_col])[:max_entries]
     marker_colors = ["rgb(33,113,181)"] * len(labels)
     fig = go.Figure(data=[go.Bar(x=labels, y=values, marker_color=marker_colors)])
     fig.layout = go.Layout(
         title={"text": title, "x": 0.5},
         xaxis=dict(autorange=True, showgrid=False, ticks="", showticklabels=False),
         clickmode="event+select",
+        height=400,
     )
     return dcc.Graph(figure=fig, id=id)
 
 
-def stacked_barchart():
-    bar1 = go.Bar(
-        x=["giraffes", "orangutans", "monkeys"], y=[20, 14, 23], name="SF Zoo"
+def stacked_barchart(
+    id="",
+    title=None,
+    label_col="",
+    sort_col="",
+    dataframe=None,
+    value_cols=None,
+    bar_names=None,
+    marker_colors=None,
+    max_entries=0,
+):
+    labels = dataframe[label_col][:max_entries]
+    bars = []
+    for i, value_col in enumerate(value_cols):
+        name = bar_names[i] if bar_names else value_col
+        bar = go.Bar(
+            x=labels,
+            y=dataframe[value_col][:max_entries],
+            name=name,
+            marker_color=marker_colors[i],
+        )
+        bars.append(bar)
+    data = bars
+    legend = Legend(font=dict(size=12))
+    layout = go.Layout(
+        legend=legend,
+        legend_orientation="h",
+        barmode="stack",
+        xaxis=dict(autorange=True, showgrid=False, ticks="", showticklabels=False),
+        clickmode="event+select",
+        height=400,
     )
-    bar2 = go.Bar(
-        x=["giraffes", "orangutans", "monkeys"], y=[12, 18, 29], name="LA Zoo"
-    )
-
-    data = [bar1, bar2]
-    layout = go.Layout(barmode="stack")
-
-    return dcc.Graph(figure=go.Figure(data=data, layout=layout))
+    if title:
+        layout.title = {"text": title, "x": 0.5}
+    return dcc.Graph(id=id, figure=go.Figure(data=data, layout=layout))
 
 
 def heatmap(title):

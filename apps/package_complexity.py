@@ -7,46 +7,82 @@ from app import cache
 from dash.exceptions import PreventUpdate
 import controller_common
 import time
+import plotly.express as px
+import constants
+import dash_html_components as html
+import math
 
 dataframe = pd.read_csv(
-    "package_complexity.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
+    "package_complexity.csv",
+    sep=";",
+    decimal=",",
+    header=0,
+    encoding="ascii",
+    engine="python",
 )
-dataframe = dataframe.round(2)
+
+
 id_prefix = "pcomp"
 dataframe.columns = [
     "Package",
     "Complexity",
     "Num. statements",
+    "Num. classes",
+    "Num. abstract classes",
+    "Num. interfaces",
+    "Num. enums",
     "Num. types",
     "Num. methods",
     "Av. class complexity",
     "Av. method complexity",
+    "Project",
     "Path",
 ]
-
-value_col_bar1 = "Num. types"
-value_col_bar2 = "Num. methods"
+hidden_columns = [
+    "Num. classes",
+    "Num. abstract classes",
+    "Num. interfaces",
+    "Num. enums",
+    "Project",
+    "Path",
+]
+value_cols_bar2 = ["Num. methods"]
+value_cols_bar1 = [
+    "Num. classes",
+    "Num. abstract classes",
+    "Num. interfaces",
+    "Num. enums",
+]
 label_col = "Package"
-max_entries = 50
+max_entries_bar2 = 30
+max_entries_bar1 = 30
 
-barchart1 = figure.barchart(
+barchart1 = figure.stacked_barchart(
     id=id_prefix + "bar1",
-    title="Number of classes interfaces and enums in package",
+    title="Number of types",
     dataframe=dataframe,
-    value_col=value_col_bar1,
     label_col=label_col,
-    max_entries=50,
+    sort_col="Num. types",
+    value_cols=value_cols_bar1,
+    bar_names=["Class", "Abstract Class", "Interface", "Enum"],
+    marker_colors=[
+        "rgb(33,113,181)",
+        "rgb(105,172,233)",
+        "rgb(60, 160, 200)",
+        "rgb(149,149,149)",
+    ],
+    max_entries=max_entries_bar1,
 )
+
 
 barchart2 = figure.barchart(
     id=id_prefix + "bar2",
-    title="Number of methods in package",
+    title="Number of methods",
     dataframe=dataframe,
-    value_col=value_col_bar2,
+    value_col=value_cols_bar2,
     label_col=label_col,
-    max_entries=max_entries,
+    max_entries=max_entries_bar2,
 )
-
 
 layout = html_comp.three_row_layout(
     row1_children=html_comp.tile(
@@ -59,9 +95,11 @@ layout = html_comp.three_row_layout(
     row3_children=html_comp.datatable(
         id_prefix=id_prefix,
         dataframe=dataframe,
-        hidden_columns=["Path"],
+        hidden_columns=hidden_columns,
         download_name="package_complexity.csv",
     ),
+    row1_title="Package Complexity & Size",
+    row2_title="Number of types and methods",
 )
 
 
@@ -74,14 +112,17 @@ layout = html_comp.three_row_layout(
 )
 @cache.memoize()
 def update_bar1(row_data, selected_indicies):
+    print("update_bar1")
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
     return controller_common.update_barchart(
         row_data,
         selected_indicies,
         barchart1,
         dataframe,
-        value_col_bar1,
+        value_cols_bar1,
         label_col,
-        max_entries,
+        max_entries_bar1,
     )
 
 
@@ -94,14 +135,17 @@ def update_bar1(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_bar2(row_data, selected_indicies):
+    print("update_bar2")
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
     return controller_common.update_barchart(
         row_data,
         selected_indicies,
         barchart2,
         dataframe,
-        value_col_bar2,
+        value_cols_bar2,
         label_col,
-        max_entries,
+        max_entries_bar2,
     )
 
 
@@ -114,6 +158,10 @@ def update_bar2(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_scatter(row_data, selected_indicies):
+    print("update_scatter")
+    if not row_data and not selected_indicies:
+        raise PreventUpdate
+    data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
     return controller_common.update_scatter(
         row_data,
         selected_indicies,
@@ -126,7 +174,7 @@ def update_scatter(row_data, selected_indicies):
             size_col="Av. method complexity",
             color_col="Av. class complexity",
         ),
-        dataframe,
+        data,
     )
 
 
@@ -144,11 +192,53 @@ def download_csv(data):
     Output(id_prefix + "data-table", "hidden_columns"),
     [Input(id_prefix + "data-table-checkboxes", "value")],
 )
-def update_hidden_columns(values):
-    if not values:
-        return ["Path"]
-    elif "showPaths" in values:
-        return []
+def update_hidden_columns(selected_checkboxes):
+    hidden = hidden_columns
+    if selected_checkboxes:
+        hidden = [col for col in hidden_columns if col not in selected_checkboxes]
+    return hidden
+
+@app.callback(
+    Output(id_prefix + "data-table", "page_current"),[
+        Input(id_prefix+"table-prev-page", "n_clicks"),
+        Input(id_prefix+"table-next-page", "n_clicks"),
+        Input(id_prefix + "data-table-num-pages", "value"),
+    ]
+)
+def update_page(clicks_prev, clicks_next, num_pages):
+    print("clicked")
+    print(clicks_next)
+    print(clicks_prev)
+
+    clicks_next = int(clicks_next) if clicks_next else 0
+    clicks_prev = int(clicks_prev) if clicks_prev else 0
+    page = (clicks_next-clicks_prev)%int(num_pages) 
+    page = num_pages if page > num_pages else page
+    print("page "+str(page))
+    return page
+
+
+@app.callback(
+    Output(id_prefix + "data-table-current-page", "value"),[
+        Input(id_prefix + "data-table", "page_current")
+    ],
+)
+def update_current_page(page_current):
+    print("update label to "+str(page_current))
+    return page_current+1
+
+@app.callback(
+    Output(id_prefix + "data-table-num-pages", "value"),[
+        Input(id_prefix + "data-table-page-size", "value"),
+        Input(id_prefix + "data-table", "filter_query"),
+    ],state=[State(id_prefix + "data-table", "data")]
+)
+def update_num_pages_(page_size, filter_query, data):
+    data_size = len(dataframe.index) if not filter_query else len(filter_table_data(filter_query))
+    num_pages = math.ceil(data_size / int(data_size if page_size == "All" else page_size))
+    print("update num pages to "+str(num_pages)+" for data size "+str(data_size))
+    return num_pages
+
 
 
 @app.callback(
@@ -178,6 +268,7 @@ def update_selected(
     filtered_table_data,
     selected_rows,
 ):
+    print("update_table")
     if not any(
         [
             deselect_all_tst,
@@ -231,3 +322,142 @@ def update_selected(
     elif deselect_all > deselect_shown and deselect_all > select_shown:
         return []
     return []
+
+
+@app.callback(
+    Output(id_prefix + "data-table", "style_data_conditional"),
+    [
+        Input(id_prefix + "data-table", "selected_rows"),
+        Input(id_prefix + "data-table", "filter_query"),
+        Input(id_prefix + "data-table", "data"),
+    ],
+    state=[
+        State(id_prefix + "data-table", "derived_virtual_data"),
+    ],
+)
+def update_table_style(selected_rows, filter, table_data, filtered_table_data):
+    print("update table style")
+    style_data = [
+        {"if": {"row_index": "even"}, "backgroundColor": "#f5f6f7"},
+        {"if": {"row_index": "odd"}, "backgroundColor": "#ffffff"},
+    ]
+    if not table_data:
+        raise PreventUpdate
+    if selected_rows is None:
+        return style_data
+    selected_indicies = []
+    if filter:
+        all_labels = pd.DataFrame.from_dict(table_data)["Package"]
+        selected_labels = [all_labels[i] for i in selected_rows]
+        filtered_labels = pd.DataFrame.from_dict(filtered_table_data)["Package"]
+        selected_indicies = [
+            i for i, label in enumerate(filtered_labels) if label in selected_labels
+        ]
+    elif not filter:
+        all_labels = dataframe["Package"]
+        selected_labels = [all_labels[i] for i in selected_rows]
+        selected_indicies = [
+            i for i, label in enumerate(all_labels) if label in selected_labels
+        ]
+    style_data.extend(
+        [
+            {"if": {"row_index": i}, "background_color": constants.SELECTED_COLOR}
+            for i in selected_indicies
+        ]
+    )
+    return style_data
+
+
+
+@app.callback(
+    Output(id_prefix + "data-table", "page_size"),
+    [
+        Input(id_prefix + "data-table-page-size", "value"),
+    ]
+)
+def update_page_size(selected_page_size):
+    page_size = int(dataframe.size) if selected_page_size=="All" else int(selected_page_size)
+    return page_size
+
+@app.callback(
+    Output(id_prefix + "data-table", "data"),
+    [Input(id_prefix + "data-table", "page_current"),
+     Input(id_prefix + "data-table", "page_size"),
+     Input(id_prefix + "data-table", "sort_by"),
+     Input(id_prefix + "data-table", "filter_query")]
+)
+def update_table_data(page_current, page_size, sort_by, filter_query):
+    print("Update table data")
+    print("size "+str(page_size))
+    print("current "+str(page_current))
+    num_ = int(page_current)*(int(page_size)+1)
+    print("num "+str(num_))
+    if num_ > int(dataframe.size):
+        print("setting current page 0")
+        page_current = 0         
+    dff = dataframe
+    if filter_query:
+        dff = filter_table_data(filter_query)
+        #return dff
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+    return dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+
+operators = [['ge ', '>='],
+             ['le ', '<='],
+             ['lt ', '<'],
+             ['gt ', '>'],
+             ['ne ', '!='],
+             ['eq ', '='],
+             ['contains '],
+             ['datestartswith ']]
+
+def split_filter_part(filter_part):
+    for operator_type in operators:
+        for operator in operator_type:
+            if operator in filter_part:
+                name_part, value_part = filter_part.split(operator, 1)
+                name = name_part[name_part.find('{') + 1: name_part.rfind('}')]
+
+                value_part = value_part.strip()
+                v0 = value_part[0]
+                if (v0 == value_part[-1] and v0 in ("'", '"', '`')):
+                    value = value_part[1: -1].replace('\\' + v0, v0)
+                else:
+                    try:
+                        value = float(value_part)
+                    except ValueError:
+                        value = value_part
+
+                # word operators need spaces after them in the filter string,
+                # but we don't want these later
+                return name, operator_type[0].strip(), value
+
+    return [None] * 3
+
+def filter_table_data(filter):
+    filtering_expressions = filter.split(' && ')
+    dff = dataframe
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    return dff
