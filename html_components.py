@@ -88,11 +88,7 @@ def _table_controls(
                     className="table_control_item_dense",
                 ),
                 html.Label("of", className="table_control_item_dense"),
-                html.Label(
-                    str(num_entries),
-                    className="table_control_item_dense",
-                    id=id_prefix + "data-table-num-entries",
-                ),
+                html.Div(id=id_prefix+"data-table-num-entries", className="table_control_item_dense", children=[]),
                 html.Label("entries"),
             ],
         ),
@@ -167,20 +163,6 @@ def datatable(
                             html.Button("Next",  id=id_prefix+"table-next-page", className="paging_button"),
                             html.Div(className="table_control take_all_space"),
                             html.Div(id=id_prefix+"data-table-paging", className="table_control_item", children=[])
-                            # html.Label("Page:", className="table_control_item_dense"),
-                            # dcc.Input(
-                            #         type="text",
-                            #         id=id_prefix + "data-table-current-page",
-                            #         className="table_control_item",
-                            #         disabled=True,
-                            #     ),
-                            # html.Label("of", className="table_control_item_dense"),
-                            # dcc.Input(
-                            #         type="text",
-                            #         id=id_prefix + "data-table-num-pages",
-                            #         className="table_control_item",
-                            #         disabled=True,
-                            #     ),
                         ],          
                     ),
                 ]

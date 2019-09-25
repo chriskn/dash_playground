@@ -225,9 +225,17 @@ def update_current_page(page_current, filter_query, page_size):
     num_pages = math.ceil(data_size / int(data_size if page_size == "All" else page_size))
     return html.Label("Page %s of %s" % (page_current+1, num_pages))
 
-
-
-
+@app.callback(
+    Output(id_prefix+"data-table-num-entries", "children"), [
+        Input(id_prefix + "data-table", "filter_query"),
+    ]
+)
+def update_num_entries(filter_query):
+    if not filter_query:
+        return [
+            html.Label(str(len(dataframe.index))) 
+        ] 
+    return [html.Label(str(len(filter_table_data(filter_query).index))) ]
 
 @app.callback(
     Output(id_prefix + "data-table", "selected_rows"),
@@ -336,6 +344,7 @@ def update_table_style(selected_rows, filter, table_data, filtered_table_data):
         return style_data
     selected_indicies = []
     if filter:
+        all_labels = pd.DataFrame.from_dict(table_data)["Package"]
         selected_labels = [all_labels[i] for i in selected_rows]
         filtered_labels = pd.DataFrame.from_dict(filtered_table_data)["Package"]
         selected_indicies = [
