@@ -112,7 +112,6 @@ layout = html_comp.three_row_layout(
 )
 @cache.memoize()
 def update_bar1(row_data, selected_indicies):
-    print("update_bar1")
     if not row_data and not selected_indicies:
         raise PreventUpdate
     return controller_common.update_barchart(
@@ -135,7 +134,6 @@ def update_bar1(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_bar2(row_data, selected_indicies):
-    print("update_bar2")
     if not row_data and not selected_indicies:
         raise PreventUpdate
     return controller_common.update_barchart(
@@ -158,7 +156,6 @@ def update_bar2(row_data, selected_indicies):
 )
 @cache.memoize()
 def update_scatter(row_data, selected_indicies):
-    print("update_scatter")
     if not row_data and not selected_indicies:
         raise PreventUpdate
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
@@ -202,42 +199,33 @@ def update_hidden_columns(selected_checkboxes):
     Output(id_prefix + "data-table", "page_current"),[
         Input(id_prefix+"table-prev-page", "n_clicks"),
         Input(id_prefix+"table-next-page", "n_clicks"),
-        Input(id_prefix + "data-table-num-pages", "value"),
+        Input(id_prefix + "data-table-page-size", "value"),
+        Input(id_prefix + "data-table", "filter_query"),
     ]
 )
-def update_page(clicks_prev, clicks_next, num_pages):
-    print("clicked")
-    print(clicks_next)
-    print(clicks_prev)
-
+def update_page(clicks_prev, clicks_next, page_size, filter_query):
     clicks_next = int(clicks_next) if clicks_next else 0
     clicks_prev = int(clicks_prev) if clicks_prev else 0
+    data_size = len(dataframe.index) if not filter_query else len(filter_table_data(filter_query))
+    num_pages = math.ceil(data_size / int(data_size if page_size == "All" else page_size))
     page = (clicks_next-clicks_prev)%int(num_pages) 
     page = num_pages if page > num_pages else page
-    print("page "+str(page))
     return page
 
 
 @app.callback(
-    Output(id_prefix + "data-table-current-page", "value"),[
-        Input(id_prefix + "data-table", "page_current")
+    Output(id_prefix + "data-table-paging", "children"),[
+        Input(id_prefix + "data-table", "page_current"),
+        Input(id_prefix + "data-table", "filter_query"),
+        Input(id_prefix + "data-table-page-size", "value"),
     ],
 )
-def update_current_page(page_current):
-    print("update label to "+str(page_current))
-    return page_current+1
-
-@app.callback(
-    Output(id_prefix + "data-table-num-pages", "value"),[
-        Input(id_prefix + "data-table-page-size", "value"),
-        Input(id_prefix + "data-table", "filter_query"),
-    ],state=[State(id_prefix + "data-table", "data")]
-)
-def update_num_pages_(page_size, filter_query, data):
+def update_current_page(page_current, filter_query, page_size):
     data_size = len(dataframe.index) if not filter_query else len(filter_table_data(filter_query))
     num_pages = math.ceil(data_size / int(data_size if page_size == "All" else page_size))
-    print("update num pages to "+str(num_pages)+" for data size "+str(data_size))
-    return num_pages
+    return html.Label("Page %s of %s" % (page_current+1, num_pages))
+
+
 
 
 
@@ -257,6 +245,7 @@ def update_num_pages_(page_size, filter_query, data):
         State(id_prefix + "data-table", "selected_rows"),
     ],
 )
+
 def update_selected(
     deselect_all_tst,
     deselect_shown_tst,
@@ -268,7 +257,7 @@ def update_selected(
     filtered_table_data,
     selected_rows,
 ):
-    print("update_table")
+    
     if not any(
         [
             deselect_all_tst,
@@ -336,7 +325,7 @@ def update_selected(
     ],
 )
 def update_table_style(selected_rows, filter, table_data, filtered_table_data):
-    print("update table style")
+    
     style_data = [
         {"if": {"row_index": "even"}, "backgroundColor": "#f5f6f7"},
         {"if": {"row_index": "odd"}, "backgroundColor": "#ffffff"},
@@ -347,7 +336,6 @@ def update_table_style(selected_rows, filter, table_data, filtered_table_data):
         return style_data
     selected_indicies = []
     if filter:
-        all_labels = pd.DataFrame.from_dict(table_data)["Package"]
         selected_labels = [all_labels[i] for i in selected_rows]
         filtered_labels = pd.DataFrame.from_dict(filtered_table_data)["Package"]
         selected_indicies = [
@@ -387,18 +375,17 @@ def update_page_size(selected_page_size):
      Input(id_prefix + "data-table", "filter_query")]
 )
 def update_table_data(page_current, page_size, sort_by, filter_query):
-    print("Update table data")
-    print("size "+str(page_size))
-    print("current "+str(page_current))
+    
+    
+    
     num_ = int(page_current)*(int(page_size)+1)
-    print("num "+str(num_))
+    
     if num_ > int(dataframe.size):
-        print("setting current page 0")
+        
         page_current = 0         
     dff = dataframe
     if filter_query:
         dff = filter_table_data(filter_query)
-        #return dff
     if len(sort_by):
         dff = dff.sort_values(
             [col['column_id'] for col in sort_by],

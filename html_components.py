@@ -166,20 +166,21 @@ def datatable(
                             html.Button("Previous", id=id_prefix+"table-prev-page", className="paging_button"),
                             html.Button("Next",  id=id_prefix+"table-next-page", className="paging_button"),
                             html.Div(className="table_control take_all_space"),
-                            html.Label("Page:", className="table_control_item_dense"),
-                            dcc.Input(
-                                    type="text",
-                                    id=id_prefix + "data-table-current-page",
-                                    className="table_control_item",
-                                    disabled=True,
-                                ),
-                            html.Label("of", className="table_control_item_dense"),
-                            dcc.Input(
-                                    type="text",
-                                    id=id_prefix + "data-table-num-pages",
-                                    className="table_control_item",
-                                    disabled=True,
-                                ),
+                            html.Div(id=id_prefix+"data-table-paging", className="table_control_item", children=[])
+                            # html.Label("Page:", className="table_control_item_dense"),
+                            # dcc.Input(
+                            #         type="text",
+                            #         id=id_prefix + "data-table-current-page",
+                            #         className="table_control_item",
+                            #         disabled=True,
+                            #     ),
+                            # html.Label("of", className="table_control_item_dense"),
+                            # dcc.Input(
+                            #         type="text",
+                            #         id=id_prefix + "data-table-num-pages",
+                            #         className="table_control_item",
+                            #         disabled=True,
+                            #     ),
                         ],          
                     ),
                 ]
