@@ -160,11 +160,10 @@ def update_scatter(row_data, selected_indicies):
         raise PreventUpdate
     data = pd.DataFrame.from_dict(row_data) if row_data else dataframe
     return controller_common.update_scatter(
-        row_data,
         selected_indicies,
         figure.scatter(
             id=id_prefix + "scatter",
-            dataframe=dataframe,
+            dataframe=data,
             label_col="Package",
             x_col="Complexity",
             y_col="Num. statements",
@@ -195,144 +194,90 @@ def update_hidden_columns(selected_checkboxes):
         hidden = [col for col in hidden_columns if col not in selected_checkboxes]
     return hidden
 
+
 @app.callback(
-    Output(id_prefix + "data-table", "page_current"),[
-        Input(id_prefix+"table-prev-page", "n_clicks"),
-        Input(id_prefix+"table-next-page", "n_clicks"),
+    Output(id_prefix + "data-table", "page_current"),
+    [
+        Input(id_prefix + "table-prev-page", "n_clicks"),
+        Input(id_prefix + "table-next-page", "n_clicks"),
         Input(id_prefix + "data-table-page-size", "value"),
         Input(id_prefix + "data-table", "filter_query"),
-    ]
+    ],
 )
 def update_page(clicks_prev, clicks_next, page_size, filter_query):
     clicks_next = int(clicks_next) if clicks_next else 0
     clicks_prev = int(clicks_prev) if clicks_prev else 0
-    data_size = len(dataframe.index) if not filter_query else len(filter_table_data(filter_query))
-    num_pages = math.ceil(data_size / int(data_size if page_size == "All" else page_size))
-    page = (clicks_next-clicks_prev)%int(num_pages) 
+    data_size = (
+        len(dataframe.index)
+        if not filter_query
+        else len(filter_table_data(filter_query))
+    )
+    num_pages = math.ceil(
+        data_size / int(data_size if page_size == "All" else page_size)
+    )
+    page = (clicks_next - clicks_prev) % int(num_pages)
     page = num_pages if page > num_pages else page
     return page
 
 
 @app.callback(
-    Output(id_prefix + "data-table-paging", "children"),[
+    Output(id_prefix + "data-table-paging", "children"),
+    [
         Input(id_prefix + "data-table", "page_current"),
         Input(id_prefix + "data-table", "filter_query"),
         Input(id_prefix + "data-table-page-size", "value"),
     ],
 )
 def update_current_page(page_current, filter_query, page_size):
-    data_size = len(dataframe.index) if not filter_query else len(filter_table_data(filter_query))
-    num_pages = math.ceil(data_size / int(data_size if page_size == "All" else page_size))
-    return html.Label("Page %s of %s" % (page_current+1, num_pages))
+    data_size = (
+        len(dataframe.index)
+        if not filter_query
+        else len(filter_table_data(filter_query))
+    )
+    num_pages = math.ceil(
+        data_size / int(data_size if page_size == "All" else page_size)
+    )
+    return html.Label("Page %s of %s" % (page_current + 1, num_pages))
+
 
 @app.callback(
-    Output(id_prefix+"data-table-num-entries", "children"), [
-        Input(id_prefix + "data-table", "filter_query"),
-    ]
+    Output(id_prefix + "data-table-num-entries", "children"),
+    [Input(id_prefix + "data-table", "filter_query")],
 )
 def update_num_entries(filter_query):
     if not filter_query:
-        return [
-            html.Label(str(len(dataframe.index))) 
-        ] 
-    return [html.Label(str(len(filter_table_data(filter_query).index))) ]
+        return [html.Label(str(len(dataframe.index)))]
+    return [html.Label(str(len(filter_table_data(filter_query).index)))]
+
 
 @app.callback(
     Output(id_prefix + "data-table", "selected_rows"),
     [
-        Input(id_prefix + "data-table-deselect-all", "n_clicks_timestamp"),
-        Input(id_prefix + "data-table-deselect-shown", "n_clicks_timestamp"),
-        Input(id_prefix + "data-table-select-shown", "n_clicks_timestamp"),
-        Input(id_prefix + "scatter", "selectedData"),
-        Input(id_prefix + "bar1", "selectedData"),
-        Input(id_prefix + "bar2", "selectedData"),
-    ],
-    state=[
-        State(id_prefix + "data-table", "data"),
-        State(id_prefix + "data-table", "derived_virtual_data"),
-        State(id_prefix + "data-table", "selected_rows"),
+        Input(id_prefix + "table-selected-labels", "value"),
+        Input(id_prefix + "data-table", "data"),
     ],
 )
-
-def update_selected(
-    deselect_all_tst,
-    deselect_shown_tst,
-    select_shown_tst,
-    selected_points,
-    selected_bars1,
-    selected_bars2,
-    table_data,
-    filtered_table_data,
-    selected_rows,
-):
-    
-    if not any(
-        [
-            deselect_all_tst,
-            deselect_shown_tst,
-            select_shown_tst,
-            selected_points,
-            selected_bars1,
-            selected_bars2,
-            table_data,
-            filtered_table_data,
-            selected_rows,
-        ]
-    ):
-        raise PreventUpdate
-    deselect_shown = int(deselect_shown_tst) if deselect_shown_tst else 0
-    select_shown = int(select_shown_tst) if select_shown_tst else 0
-    deselect_all = int(deselect_all_tst) if deselect_all_tst else 0
-    if selected_bars1:
-        selected_labels = [point.get("x") for point in selected_bars1.get("points")]
-        return controller_common.update_selected_table_rows(table_data, selected_labels)
-    elif selected_bars2:
-        selected_labels = [point.get("x") for point in selected_bars2.get("points")]
-        return controller_common.update_selected_table_rows(table_data, selected_labels)
-    elif selected_points:
-        selected_labels = [
-            point.get("hovertext") for point in selected_points.get("points")
-        ]
-        return controller_common.update_selected_table_rows(table_data, selected_labels)
-    elif deselect_shown > select_shown and deselect_shown > deselect_all:
-        if not selected_rows:
-            return []
-        labels_to_uncheck = pd.DataFrame.from_dict(filtered_table_data)[
-            "Package"
-        ].tolist()
-        selected_labels = [
-            pd.DataFrame.from_dict(table_data)["Package"][i] for i in selected_rows
-        ]
-        new_selected_labels = [
-            selected
-            for selected in selected_labels
-            if selected not in labels_to_uncheck
-        ]
-        return controller_common.update_selected_table_rows(
-            table_data, new_selected_labels
+def update_selected_rows(selected_label_str, table_data):
+    if selected_label_str and len(selected_label_str.split(" ")) > 0:
+        selected_labels = selected_label_str.split(" ")
+        selected_rows = controller_common.get_selected_indicies(
+            table_data, selected_labels
         )
-    elif select_shown > deselect_shown and select_shown > deselect_all:
-        selected_labels = pd.DataFrame.from_dict(filtered_table_data)[
-            "Package"
-        ].tolist()
-        return controller_common.update_selected_table_rows(table_data, selected_labels)
-    elif deselect_all > deselect_shown and deselect_all > select_shown:
-        return []
+        return selected_rows
     return []
+
+
 
 
 @app.callback(
     Output(id_prefix + "data-table", "style_data_conditional"),
     [
         Input(id_prefix + "data-table", "selected_rows"),
-        Input(id_prefix + "data-table", "filter_query"),
         Input(id_prefix + "data-table", "data"),
     ],
-    state=[
-        State(id_prefix + "data-table", "derived_virtual_data"),
-    ],
+
 )
-def update_table_style(selected_rows, filter, table_data, filtered_table_data):
+def update_table_style(selected_rows, table_data):
     
     style_data = [
         {"if": {"row_index": "even"}, "backgroundColor": "#f5f6f7"},
@@ -343,19 +288,11 @@ def update_table_style(selected_rows, filter, table_data, filtered_table_data):
     if selected_rows is None:
         return style_data
     selected_indicies = []
-    if filter:
-        all_labels = pd.DataFrame.from_dict(table_data)["Package"]
-        selected_labels = [all_labels[i] for i in selected_rows]
-        filtered_labels = pd.DataFrame.from_dict(filtered_table_data)["Package"]
-        selected_indicies = [
-            i for i, label in enumerate(filtered_labels) if label in selected_labels
-        ]
-    elif not filter:
-        all_labels = dataframe["Package"]
-        selected_labels = [all_labels[i] for i in selected_rows]
-        selected_indicies = [
-            i for i, label in enumerate(all_labels) if label in selected_labels
-        ]
+    all_labels = pd.DataFrame.from_dict(table_data)["Package"]
+    selected_labels = [all_labels[i] for i in selected_rows]
+    selected_indicies = controller_common.get_selected_indicies(
+            table_data, selected_labels
+    )
     style_data.extend(
         [
             {"if": {"row_index": i}, "background_color": constants.SELECTED_COLOR}
@@ -366,68 +303,180 @@ def update_table_style(selected_rows, filter, table_data, filtered_table_data):
 
 
 
+
+def update_selected_labels_by_graph(selected_bars1, selected_bars2, selected_points):
+    if selected_bars1:
+        return " ".join([point.get("x") for point in selected_bars1.get("points")])
+    elif selected_bars2:
+        return " ".join([point.get("x") for point in selected_bars1.get("points")])
+    elif selected_points:
+        return " ".join(
+            [point.get("hovertext") for point in selected_points.get("points")]
+        )
+    return ""
+
+
+@app.callback(
+    Output(id_prefix + "table-selected-labels", "value"),
+    [
+        Input(id_prefix + "data-table-deselect-all", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table-deselect-shown", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table-select-shown", "n_clicks_timestamp"),
+        Input(id_prefix + "scatter", "selectedData"),
+        Input(id_prefix + "bar1", "selectedData"),
+        Input(id_prefix + "bar2", "selectedData"),
+        Input(id_prefix + "table-prev-page", "n_clicks_timestamp"),
+        Input(id_prefix + "table-next-page", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table-page-size", "value"),
+        Input(id_prefix + "data-table", "filter_query"),
+    ],
+    state=[
+        State(id_prefix + "data-table", "selected_rows"),
+        State(id_prefix + "data-table", "data"),
+        State(id_prefix + "data-table", "derived_virtual_data"),
+        State(id_prefix + "table-selected-labels", "value"),
+    ],
+)
+def update_selected_labels(
+    deselect_all_tst,
+    deselect_shown_tst,
+    select_shown_tst,
+    selected_points,
+    selected_bars1,
+    selected_bars2,
+    prev_clicks,
+    next_clicks,
+    page_size,
+    query,
+    selected_rows,
+    table_data,
+    filtered_table_data,
+    selected_labels,
+):
+
+    if not any(
+        [
+            deselect_all_tst,
+            deselect_shown_tst,
+            select_shown_tst,
+            selected_points,
+            selected_bars1,
+            selected_bars2,
+            table_data,
+            filtered_table_data,
+            selected_labels,
+        ]
+    ):
+        raise PreventUpdate
+    deselect_shown = int(deselect_shown_tst) if deselect_shown_tst else 0
+    select_shown = int(select_shown_tst) if select_shown_tst else 0
+    deselect_all = int(deselect_all_tst) if deselect_all_tst else 0
+    button_timestamps = [deselect_all, deselect_shown, select_shown]
+
+    if any([selected_bars1, selected_bars2, selected_points]):
+        return update_selected_labels_by_graph(
+            selected_bars1, selected_bars2, selected_points
+        )
+    elif deselect_shown > select_shown and deselect_shown > deselect_all:
+        if not selected_labels:
+            return ""
+        labels_to_uncheck = pd.DataFrame.from_dict(filtered_table_data)[
+            "Package"
+        ].tolist()
+        new_selected_labels = [
+            selected
+            for selected in selected_labels.split()
+            if selected not in labels_to_uncheck
+        ]
+        return " ".join(set(new_selected_labels))
+    elif select_shown > deselect_shown and select_shown > deselect_all:
+        new_selected_labels = pd.DataFrame.from_dict(filtered_table_data)[
+            "Package"
+        ].tolist()
+        if selected_labels and len(selected_labels.split(" ")) > 0:
+            extended_selected = selected_labels.split(" ")
+            extended_selected.extend(new_selected_labels)
+            return " ".join(set(extended_selected))
+        return " ".join(set(new_selected_labels))
+    elif deselect_all > deselect_shown and deselect_all > select_shown:
+        return ""
+    else:
+        labels_to_add = []
+        if selected_rows:
+            show_labels = pd.DataFrame.from_dict(filtered_table_data)[
+                "Package"
+            ].tolist()
+            labels_to_add = [show_labels[i] for i in selected_rows]
+            print("adding")
+            print(labels_to_add)
+        if selected_labels and len(selected_labels.split(" ")) > 0:
+            extended_selected = selected_labels.split(" ")
+            extended_selected.extend(labels_to_add)
+            return " ".join(set(extended_selected))
+        return " ".join(set(labels_to_add))
+
+
 @app.callback(
     Output(id_prefix + "data-table", "page_size"),
-    [
-        Input(id_prefix + "data-table-page-size", "value"),
-    ]
+    [Input(id_prefix + "data-table-page-size", "value")],
 )
 def update_page_size(selected_page_size):
-    page_size = int(dataframe.size) if selected_page_size=="All" else int(selected_page_size)
+    page_size = (
+        int(dataframe.size) if selected_page_size == "All" else int(selected_page_size)
+    )
     return page_size
+
 
 @app.callback(
     Output(id_prefix + "data-table", "data"),
-    [Input(id_prefix + "data-table", "page_current"),
-     Input(id_prefix + "data-table", "page_size"),
-     Input(id_prefix + "data-table", "sort_by"),
-     Input(id_prefix + "data-table", "filter_query")]
+    [
+        Input(id_prefix + "data-table", "page_current"),
+        Input(id_prefix + "data-table", "page_size"),
+        Input(id_prefix + "data-table", "sort_by"),
+        Input(id_prefix + "data-table", "filter_query"),
+    ],
 )
 def update_table_data(page_current, page_size, sort_by, filter_query):
-    
-    
-    
-    num_ = int(page_current)*(int(page_size)+1)
-    
+    num_ = int(page_current) * (int(page_size) + 1)
     if num_ > int(dataframe.size):
-        
-        page_current = 0         
+        page_current = 0
     dff = dataframe
     if filter_query:
         dff = filter_table_data(filter_query)
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
-            ascending=[
-                col['direction'] == 'asc'
-                for col in sort_by
-            ],
-            inplace=False
+            [col["column_id"] for col in sort_by],
+            ascending=[col["direction"] == "asc" for col in sort_by],
+            inplace=False,
         )
-    return dff.iloc[
-        page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records')
+    return dff.iloc[page_current * page_size : (page_current + 1) * page_size].to_dict(
+        "records"
+    )
 
-operators = [['ge ', '>='],
-             ['le ', '<='],
-             ['lt ', '<'],
-             ['gt ', '>'],
-             ['ne ', '!='],
-             ['eq ', '='],
-             ['contains '],
-             ['datestartswith ']]
+
+operators = [
+    ["ge ", ">="],
+    ["le ", "<="],
+    ["lt ", "<"],
+    ["gt ", ">"],
+    ["ne ", "!="],
+    ["eq ", "="],
+    ["contains "],
+    ["datestartswith "],
+]
+
 
 def split_filter_part(filter_part):
     for operator_type in operators:
         for operator in operator_type:
             if operator in filter_part:
                 name_part, value_part = filter_part.split(operator, 1)
-                name = name_part[name_part.find('{') + 1: name_part.rfind('}')]
+                name = name_part[name_part.find("{") + 1 : name_part.rfind("}")]
 
                 value_part = value_part.strip()
                 v0 = value_part[0]
-                if (v0 == value_part[-1] and v0 in ("'", '"', '`')):
-                    value = value_part[1: -1].replace('\\' + v0, v0)
+                if v0 == value_part[-1] and v0 in ("'", '"', "`"):
+                    value = value_part[1:-1].replace("\\" + v0, v0)
                 else:
                     try:
                         value = float(value_part)
@@ -440,18 +489,19 @@ def split_filter_part(filter_part):
 
     return [None] * 3
 
+
 def filter_table_data(filter):
-    filtering_expressions = filter.split(' && ')
+    filtering_expressions = filter.split(" && ")
     dff = dataframe
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
-        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+        if operator in ("eq", "ne", "lt", "le", "gt", "ge"):
             # these operators match pandas series operator method names
             dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
-        elif operator == 'contains':
+        elif operator == "contains":
             dff = dff.loc[dff[col_name].str.contains(filter_value)]
-        elif operator == 'datestartswith':
+        elif operator == "datestartswith":
             # this is a simplification of the front-end filtering logic,
             # only works with complete fields in standard format
             dff = dff.loc[dff[col_name].str.startswith(filter_value)]

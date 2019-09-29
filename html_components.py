@@ -53,16 +53,18 @@ def _table_controls(
         {"label": size, "value": size} for size in ["10", "20", "50", "100", "All"]
     ]
     return [
-        html.Button("Select Shown",
+        html.Button(
+            "Select Shown",
             id=id_prefix + "data-table-select-shown",
             className="table_control_item",
         ),
-        
-        html.Button("Deselect Shown",
+        html.Button(
+            "Deselect Shown",
             id=id_prefix + "data-table-deselect-shown",
             className="table_control_item",
         ),
-        html.Button("Deselect All",
+        html.Button(
+            "Deselect All",
             id=id_prefix + "data-table-deselect-all",
             className="table_control_item",
         ),
@@ -88,7 +90,11 @@ def _table_controls(
                     className="table_control_item_dense",
                 ),
                 html.Label("of", className="table_control_item_dense"),
-                html.Div(id=id_prefix+"data-table-num-entries", className="table_control_item_dense", children=[]),
+                html.Div(
+                    id=id_prefix + "data-table-num-entries",
+                    className="table_control_item_dense",
+                    children=[],
+                ),
                 html.Label("entries"),
             ],
         ),
@@ -110,16 +116,17 @@ def datatable(
         className="twelve columns",
         children=[
             html.Div(
-                children=[
-                    html.Div(
-                        className="table_control_outer",
-                        children=_table_controls(
-                            id_prefix=id_prefix,
-                            hidden_columns=hidden_columns,
-                            num_entries=len(dataframe.index) + 1,
-                        ),
-                    )
-                ]
+                className="table_control_outer",
+                children=_table_controls(
+                    id_prefix=id_prefix,
+                    hidden_columns=hidden_columns,
+                    num_entries=len(dataframe.index) + 1,
+                ),
+            ),
+            dcc.Input(
+                type="text",
+                className="table_control",
+                id=id_prefix + "table-selected-labels",
             ),
             dcc.Loading(
                 id=id_prefix + "tabe-loading",
@@ -127,18 +134,14 @@ def datatable(
                     id=id_prefix + "data-table",
                     hidden_columns=hidden_columns,
                     columns=[{"name": i, "id": i} for i in dataframe.columns],
-                    
                     filter_action="custom",
                     row_selectable="multi",
-                    
                     page_current=0,
                     page_size=100,
                     page_action="none",
-                    
                     sort_action="custom",
                     sort_mode="multi",
                     sort_by=[],
-                    
                     fill_width=True,
                     data=dataframe.to_dict("records"),
                     style_header={
@@ -155,17 +158,25 @@ def datatable(
                 ),
             ),
             html.Div(
+                className="table_control",
                 children=[
-                    html.Div(
-                        className="table_control",
-                        children=[
-                            html.Button("Previous", id=id_prefix+"table-prev-page", className="paging_button"),
-                            html.Button("Next",  id=id_prefix+"table-next-page", className="paging_button"),
-                            html.Div(className="table_control take_all_space"),
-                            html.Div(id=id_prefix+"data-table-paging", className="table_control_item", children=[])
-                        ],          
+                    html.Button(
+                        "Previous",
+                        id=id_prefix + "table-prev-page",
+                        className="paging_button",
                     ),
-                ]
+                    html.Button(
+                        "Next",
+                        id=id_prefix + "table-next-page",
+                        className="paging_button",
+                    ),
+                    html.Div(className="table_control take_all_space"),
+                    html.Div(
+                        id=id_prefix + "data-table-paging",
+                        className="table_control_item",
+                        children=[],
+                    ),
+                ],
             ),
         ],
     )

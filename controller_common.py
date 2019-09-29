@@ -11,7 +11,7 @@ def update_download_link(data):
     return csv_string
 
 
-def update_scatter(row_data, selected_indicies, scatter, data):
+def update_scatter(selected_indicies, scatter, data):
     chart = scatter
     if selected_indicies:
         fig = chart.figure
@@ -57,7 +57,7 @@ def _update_marker(selected_indicies, data, figure, graph_labels):
     return figure
 
 
-def update_selected_table_rows(table_data, selected_labels):
+def get_selected_indicies(table_data, selected_labels):
     packages_in_table = pd.DataFrame.from_dict(table_data)["Package"].tolist()
     indicies = [
         i for i, label in enumerate(packages_in_table) if label in selected_labels
