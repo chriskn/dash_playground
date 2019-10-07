@@ -1,0 +1,22 @@
+[MASTER]
+jobs= 0 # auto-detect the number of processors available
+init-hook='import sys; sys.path.append("./sat/"); sys.path.append("./test/"); sys.path.append("./test_integration/")'
+
+[MESSAGES CONTROL]
+# message code: http://pylint-messages.wikidot.com/all-codes
+disable = 
+      C0111, # Missing docstring
+      C0301, # Line too long
+      C0411, # Imports order 
+      C0330  # Wrong hanging indentation before block
+	  
+[FORMAT]
+max-module-lines = 300
+
+[REFACTORING]
+# Maximum number of nested blocks for function / method body
+max-nested-blocks=4
+
+[REPORTS]
+reports=no 
+

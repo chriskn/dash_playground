@@ -43,7 +43,7 @@ def three_row_layout(
 
 
 def _table_controls(
-    id_prefix="", download_name="table_data.csv", hidden_columns=None, num_entries=0
+    id_prefix="", download_name="data_table.csv", hidden_columns=None, num_entries=0
 ):
     hidden_cols = hidden_columns if hidden_columns else []
     hidden_col_options = [
@@ -93,7 +93,7 @@ def _table_controls(
                 html.Div(
                     id=id_prefix + "data-table-num-entries",
                     className="table_control_item_dense",
-                    children=[],
+                    children=[html.Label(num_entries)],
                 ),
                 html.Label("entries"),
             ],
@@ -119,18 +119,18 @@ def datatable(
                 className="table_control_outer",
                 children=_table_controls(
                     id_prefix=id_prefix,
+                    download_name = download_name,
                     hidden_columns=hidden_columns,
-                    num_entries=len(dataframe.index) + 1,
+                    num_entries=len(dataframe.index),
                 ),
             ),
             dcc.Input(
                 type="text",
-                className="table_control",
+                className="show-hide",
                 id=id_prefix + "table-selected-labels",
             ),
             dcc.Loading(
-                id=id_prefix + "tabe-loading",
-                children=dash_table.DataTable(
+            dash_table.DataTable(
                     id=id_prefix + "data-table",
                     hidden_columns=hidden_columns,
                     columns=[{"name": i, "id": i} for i in dataframe.columns],
@@ -158,6 +158,7 @@ def datatable(
                 ),
             ),
             html.Div(
+                id=id_prefix + "data-table-paging-controll",   
                 className="table_control",
                 children=[
                     html.Button(

@@ -7,7 +7,7 @@ import constants
 def update_download_link(data):
     df = pd.DataFrame.from_dict(data)
     csv_string = df.iloc[:, ::-1].to_csv(index=False, encoding="utf-8", decimal=",")
-    csv_string = "data:text/csv;charset=utf-8," + url_parser.quote(csv_string)
+    csv_string = "data:text/csv;charset=utf-8," + url_parser.quote(csv_string)   
     return csv_string
 
 

@@ -7,9 +7,7 @@ from app import cache
 from dash.exceptions import PreventUpdate
 import controller_common
 
-dataframe = pd.read_csv(
-    "file_changes.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python"
-)
+dataframe = pd.read_csv("file_changes.csv", sep="\s*;\s*", header=0, encoding="ascii", engine="python")
 dataframe = dataframe.round(2)
 id_prefix = "fchanges"
 label_col = "File"
