@@ -12,6 +12,7 @@ import plotly.express as px
 import constants
 import dash_html_components as html
 import math
+import dash
 
 dataframe = pd.read_csv(
     "package_complexity.csv",
@@ -205,7 +206,7 @@ def update_hidden_columns(selected_checkboxes):
     ],
 )
 def update_paging_visibility(page_size, filter_query):
-    print("update table data")
+    page_size = 100 if not page_size else page_size
     data_size = (
         len(dataframe.index)
         if not filter_query
@@ -228,7 +229,8 @@ def update_paging_visibility(page_size, filter_query):
     ],
 )
 def update_page(clicks_prev, clicks_next, page_size, filter_query):
-    print("update table data")
+    print("update page")
+
     clicks_next = int(clicks_next) if clicks_next else 0
     clicks_prev = int(clicks_prev) if clicks_prev else 0
     data_size = (
@@ -254,6 +256,8 @@ def update_page(clicks_prev, clicks_next, page_size, filter_query):
 )
 def update_current_page(page_current, filter_query, page_size):
     print("update current page")
+    page_size = 100 if not page_size else page_size
+
     data_size = (
         len(dataframe.index)
         if not filter_query
@@ -262,6 +266,8 @@ def update_current_page(page_current, filter_query, page_size):
     num_pages = math.ceil(
         data_size / int(data_size if page_size == "All" else page_size)
     )
+    if num_pages < 2:
+        raise PreventUpdate
     return html.Label("Page %s of %s" % (page_current + 1, num_pages))
 
 
@@ -342,124 +348,125 @@ def update_selected_labels_by_graph(selected_bars1, selected_bars2, selected_poi
     return ""
 
 
-# @app.callback(
-#     Output(id_prefix + "table-selected-labels", "value"),
-#     [
-#         Input(id_prefix + "data-table-deselect-all", "n_clicks_timestamp"),
-#         Input(id_prefix + "data-table-deselect-shown", "n_clicks_timestamp"),
-#         Input(id_prefix + "data-table-select-shown", "n_clicks_timestamp"),
-#         Input(id_prefix + "scatter", "selectedData"),
-#         Input(id_prefix + "bar1", "selectedData"),
-#         Input(id_prefix + "bar2", "selectedData"),
-#         Input(id_prefix + "table-prev-page", "n_clicks_timestamp"),
-#         Input(id_prefix + "table-next-page", "n_clicks_timestamp"),
-#         Input(id_prefix + "data-table-page-size", "value"),
-#         Input(id_prefix + "data-table", "filter_query"),
-#     ],
-#     state=[
-#         State(id_prefix + "data-table", "selected_rows"),
-#         State(id_prefix + "data-table", "data"),
-#         State(id_prefix + "data-table", "derived_virtual_data"),
-#         State(id_prefix + "table-selected-labels", "value"),
-#     ],
-# )
-# def update_selected_labels(
-#     deselect_all_tst,
-#     deselect_shown_tst,
-#     select_shown_tst,
-#     selected_points,
-#     selected_bars1,
-#     selected_bars2,
-#     prev_clicks,
-#     next_clicks,
-#     page_size,
-#     query,
-#     selected_rows,
-#     table_data,
-#     filtered_table_data,
-#     selected_labels,
-# ):
-#     print("update selected labels")
-#     deselect_shown = int(deselect_shown_tst) if deselect_shown_tst else 0
-#     select_shown = int(select_shown_tst) if select_shown_tst else 0
-#     deselect_all = int(deselect_all_tst) if deselect_all_tst else 0
-
-#     if any([selected_bars1, selected_bars2, selected_points]):
-#         return update_selected_labels_by_graph(
-#             selected_bars1, selected_bars2, selected_points
-#         )
-#     elif deselect_shown > select_shown and deselect_shown > deselect_all:
-#         if not selected_labels:
-#             return ""
-#         labels_to_uncheck = pd.DataFrame.from_dict(filtered_table_data)[
-#             "Package"
-#         ].tolist()
-#         new_selected_labels = [
-#             selected
-#             for selected in selected_labels.split()
-#             if selected not in labels_to_uncheck
-#         ]
-#         return " ".join(set(new_selected_labels))
-#     elif select_shown > deselect_shown and select_shown > deselect_all:
-#         new_selected_labels = pd.DataFrame.from_dict(filtered_table_data)[
-#             "Package"
-#         ].tolist()
-#         if selected_labels and len(selected_labels.split(" ")) > 0:
-#             extended_selected = selected_labels.split(" ")
-#             extended_selected.extend(new_selected_labels)
-#             return " ".join(set(extended_selected))
-#         return " ".join(set(new_selected_labels))
-#     elif deselect_all > deselect_shown and deselect_all > select_shown:
-#         return ""
-#     else:
-#         labels_to_add = []
-#         if selected_rows:
-#             show_labels = pd.DataFrame.from_dict(filtered_table_data)[
-#                 "Package"
-#             ].tolist()
-#             labels_to_add = [show_labels[i] for i in selected_rows]
-#         if selected_labels and len(selected_labels.split(" ")) > 0:
-#             extended_selected = selected_labels.split(" ")
-#             extended_selected.extend(labels_to_add)
-#             return " ".join(set(extended_selected))
-#         return " ".join(set(labels_to_add))
+@app.callback(
+    Output(id_prefix + "table-selected-labels", "value"),
+    [
+        Input(id_prefix + "data-table-deselect-all", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table-deselect-shown", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table-select-shown", "n_clicks_timestamp"),
+        Input(id_prefix + "scatter", "selectedData"),
+        Input(id_prefix + "bar1", "selectedData"),
+        Input(id_prefix + "bar2", "selectedData"),
+        Input(id_prefix + "table-prev-page", "n_clicks_timestamp"),
+        Input(id_prefix + "table-next-page", "n_clicks_timestamp"),
+        Input(id_prefix + "data-table", "page_size"),
+        Input(id_prefix + "data-table", "filter_query"),
+    ],
+    state=[
+        State(id_prefix + "data-table", "selected_rows"),
+        State(id_prefix + "data-table", "data"),
+        State(id_prefix + "table-selected-labels", "value"),
+    ],
+)
+def update_selected_labels(
+    deselect_all_tst,
+    deselect_shown_tst,
+    select_shown_tst,
+    selected_points,
+    selected_bars1,
+    selected_bars2,
+    _prev_clicks,
+    _next_clicks,
+    _page_size,
+    _query,
+    selected_rows,
+    table_data,
+    selected_labels,
+):
+    deselect_shown = int(deselect_shown_tst) if deselect_shown_tst else 0
+    select_shown = int(select_shown_tst) if select_shown_tst else 0
+    deselect_all = int(deselect_all_tst) if deselect_all_tst else 0
+    if any([selected_bars1, selected_bars2, selected_points]):
+        return update_selected_labels_by_graph(
+            selected_bars1, selected_bars2, selected_points
+        )
+    elif deselect_shown > select_shown and deselect_shown > deselect_all:
+        if not selected_labels:
+            return ""
+        labels_to_uncheck = pd.DataFrame.from_dict(table_data)[
+            "Package"
+        ].tolist()
+        new_selected_labels = [
+            selected
+            for selected in selected_labels.split()
+            if selected not in labels_to_uncheck
+        ]
+        return " ".join(set(new_selected_labels))
+    elif select_shown > deselect_shown and select_shown > deselect_all:
+        new_selected_labels = pd.DataFrame.from_dict(table_data)[
+            "Package"
+        ].tolist()
+        if selected_labels and len(selected_labels.split(" ")) > 0:
+            extended_selected = selected_labels.split(" ")
+            extended_selected.extend(new_selected_labels)
+            return " ".join(set(extended_selected))
+        return " ".join(set(new_selected_labels))
+    elif deselect_all > deselect_shown and deselect_all > select_shown:
+        return ""
+    else:
+        labels_to_add = []
+        if selected_rows:
+            show_labels = pd.DataFrame.from_dict(table_data)[
+                "Package"
+            ].tolist()
+            labels_to_add = [show_labels[i] for i in selected_rows]
+        if selected_labels and len(selected_labels.split(" ")) > 0:
+            extended_selected = selected_labels.split(" ")
+            extended_selected.extend(labels_to_add)
+            return " ".join(set(extended_selected))
+        return " ".join(set(labels_to_add))
 
 
-# @app.callback(
-#     Output(id_prefix + "data-table", "page_size"),
-#     [Input(id_prefix + "data-table-page-size", "value")],
-# )
-# def update_page_size(selected_page_size):
-#     page_size = (
-#         int(dataframe.size) if selected_page_size == "All" else int(selected_page_size)
-#     )
-#     print("update page size to "+str(page_size))
-#     return page_size
+
+@app.callback(
+    Output(id_prefix + "data-table", "page_size"),
+    [Input(id_prefix + "data-table-page-size", "value")],
+)
+def update_page_size(selected_page_size):
+    if not selected_page_size:
+        raise PreventUpdate
+    page_size = (
+        int(dataframe.size) if selected_page_size == "All" else int(selected_page_size)
+    )
+    print("update page size to "+str(selected_page_size))
+    return page_size
 
 
-# @app.callback(
-#     Output(id_prefix + "data-table", "data"),
-#     [
-#         Input(id_prefix + "data-table", "page_current"),
-#         Input(id_prefix + "data-table", "page_size"),
-#         Input(id_prefix + "data-table", "sort_by"),
-#         Input(id_prefix + "data-table", "filter_query"),
-#     ],
-# )
-# def update_table_data(page_current, page_size, sort_by, filter_query):
-#     print("update table data")
-#     num_ = int(page_current) * (int(page_size) + 1)
-#     if num_ > int(dataframe.size):
-#         page_current = 0
-#     dff = dataframe
-#     if filter_query:
-#         dff = table_common.filter_table_data(filter_query, dataframe)
-#     if len(sort_by):
-#         dff = dff.sort_values(
-#             [col["column_id"] for col in sort_by],
-#             ascending=[col["direction"] == "asc" for col in sort_by],
-#             inplace=False,
-#         )
-#     return dff.iloc[page_current * page_size : (page_current + 1) * page_size].to_dict(
-#         "records"
-#     )
+@app.callback(
+    Output(id_prefix + "data-table", "data"),
+    [
+        Input(id_prefix + "data-table", "page_current"),
+        Input(id_prefix + "data-table", "page_size"),
+        Input(id_prefix + "data-table", "sort_by"),
+        Input(id_prefix + "data-table", "filter_query"),
+    ],
+)
+def update_table_data(page_current, page_size, sort_by, filter_query):
+    print("update table data")
+    page_size = len(dataframe.index) if not page_size else page_size
+    page_current = 0 if not page_current else page_current
+    num_ = int(page_current) * (int(page_size) + 1)
+    if num_ > int(dataframe.size):
+        page_current = 0
+    dff = dataframe
+    if filter_query:
+        dff = table_common.filter_table_data(filter_query, dataframe)
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col["column_id"] for col in sort_by],
+            ascending=[col["direction"] == "asc" for col in sort_by],
+            inplace=False,
+        )
+    return dff.iloc[page_current * page_size : (page_current + 1) * page_size].to_dict(
+        "records"
+    )
