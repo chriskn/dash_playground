@@ -1,6 +1,7 @@
 import dash
 from flask_caching import Cache
 
+
 app = dash.Dash(name="Sat", url_base_pathname="/sat/")
 app.title = "Sat"
 cache = Cache(

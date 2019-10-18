@@ -65,9 +65,9 @@ def display_tab_content(path):
     if path == "/sat/fchanges":
         return file_changes.layout
     elif path == "/sat/packcomp":
-        return package_complexity.layout
+        return package_complexity.LAYOUT
     else:
-        return package_complexity.layout
+        return package_complexity.LAYOUT
 
 
 @app.callback(Output("topnav", "children"), [Input("url", "pathname")])

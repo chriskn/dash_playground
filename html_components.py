@@ -129,8 +129,7 @@ def datatable(
                 className="show-hide",
                 id=id_prefix + "table-selected-labels",
             ),
-            dcc.Loading(
-            dash_table.DataTable(
+                dash_table.DataTable(
                     id=id_prefix + "data-table",
                     hidden_columns=hidden_columns,
                     columns=[{"name": i, "id": i} for i in dataframe.columns],
@@ -154,9 +153,8 @@ def datatable(
                         {"if": {"row_index": "odd"}, "backgroundColor": "#ffffff"},
                     ],
                 ),
-            ),
             html.Div(
-                id=id_prefix + "data-table-paging-controll",   
+                id=id_prefix + "data-table-paging-controll",
                 className="table_control",
                 children=[
                     html.Button(

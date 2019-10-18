@@ -1,3 +1,6 @@
 .vscode
 /.pytest_cache/v/cache
 /__pycache__/*.pyc
+*.pyc
+.flask-cache
+.history

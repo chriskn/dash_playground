@@ -75,6 +75,9 @@ def treemap(title, values, labels):
     return dcc.Graph(figure=fig)
 
 
+
+
+
 def scatter(
     id="",
     dataframe=None,
@@ -94,6 +97,7 @@ def scatter(
         color=color_col,
         color_continuous_scale=px.colors.sequential.Blues,
         height=400,
+        render_mode='webgl'
     )
     fig.update_traces(
         marker=dict(

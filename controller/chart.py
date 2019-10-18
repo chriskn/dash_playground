@@ -1,14 +1,5 @@
 import pandas as pd
-import urllib.parse as url_parser
-from dash.exceptions import PreventUpdate
 import constants
-
-
-def update_download_link(data):
-    df = pd.DataFrame.from_dict(data)
-    csv_string = df.iloc[:, ::-1].to_csv(index=False, encoding="utf-8", decimal=",")
-    csv_string = "data:text/csv;charset=utf-8," + url_parser.quote(csv_string)   
-    return csv_string
 
 
 def update_scatter(selected_indicies, scatter, data):
@@ -39,7 +30,7 @@ def update_barchart(
 
 def _update_bar_data(data, fig, value_cols, label_col, max_entries):
     labels = list(data[label_col])[:max_entries]
-    for i, value_col in enumerate(value_cols):
+    for i, _ in enumerate(value_cols):
         fig.data[i].x = labels
         fig.data[i].y = data[value_cols[i]].tolist()[:max_entries]
     fig.data[0].marker = {"color": ["rgb(33,113,181)"] * len(labels)}
@@ -55,11 +46,3 @@ def _update_marker(selected_indicies, data, figure, graph_labels):
             marker_colors[i] = constants.SELECTED_COLOR
     figure.data[0].marker.color = tuple(marker_colors)
     return figure
-
-
-def get_selected_indicies(table_data, selected_labels):
-    packages_in_table = pd.DataFrame.from_dict(table_data)["Package"].tolist()
-    indicies = [
-        i for i, label in enumerate(packages_in_table) if label in selected_labels
-    ]
-    return indicies
